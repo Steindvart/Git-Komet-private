@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>Проекты</h1>
-    <p class="subtitle">Проекты из T1 Сфера.Код</p>
+    <p class="subtitle">Управление Git-репозиториями</p>
 
     <div class="actions-bar">
       <button class="btn btn-primary" @click="showAddModal = true">
@@ -11,7 +11,7 @@
 
     <div class="projects-list">
       <div v-if="projects.length === 0" class="empty-state">
-        <p>Пока нет проектов. Добавьте ваш первый проект из T1 Сфера.Код!</p>
+        <p>Пока нет проектов. Добавьте ваш первый Git-репозиторий!</p>
       </div>
       
       <div v-else class="card-grid">
@@ -35,14 +35,14 @@
     <div v-if="showAddModal" class="modal">
       <div class="modal-content">
         <h2>Добавить проект</h2>
-        <p class="modal-note">Добавьте проект из T1 Сфера.Код</p>
+        <p class="modal-note">Добавьте Git-репозиторий для анализа</p>
         <form @submit.prevent="addProject">
           <div class="form-group">
             <label>Название</label>
             <input v-model="newProject.name" type="text" required />
           </div>
           <div class="form-group">
-            <label>Внешний ID (ID проекта в T1)</label>
+            <label>Внешний ID (ID проекта)</label>
             <input v-model="newProject.external_id" type="text" required />
           </div>
           <div class="form-group">

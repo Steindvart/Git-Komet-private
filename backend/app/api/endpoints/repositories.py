@@ -15,7 +15,7 @@ def list_projects(
     limit: int = 100,
     db: Session = Depends(get_db)
 ):
-    """List all projects from T1 Сфера.Код."""
+    """List all projects."""
     projects = db.query(ProjectModel).offset(skip).limit(limit).all()
     return projects
 
@@ -25,7 +25,7 @@ def create_project(
     project: ProjectCreate,
     db: Session = Depends(get_db)
 ):
-    """Create a new project (from T1 Сфера.Код API)."""
+    """Create a new project."""
     # Check if project already exists
     existing = db.query(ProjectModel).filter(
         ProjectModel.external_id == project.external_id
@@ -78,7 +78,7 @@ def generate_mock_data(
     db: Session = Depends(get_db)
 ):
     """
-    Generate mock data for a project as if from T1 Сфера.Код API.
+    Generate mock data for a project for demonstration purposes.
     
     This simulates receiving:
     - Commits with test coverage and TODO tracking
@@ -86,7 +86,7 @@ def generate_mock_data(
     - Code reviews with comment counts
     - Tasks with stage timing for bottleneck analysis
     
-    In production, this would be replaced with actual T1 API integration.
+    In production, this would be replaced with actual Git repository integration.
     """
     project = db.query(ProjectModel).filter(
         ProjectModel.id == project_id

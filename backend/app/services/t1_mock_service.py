@@ -1,6 +1,6 @@
 """
-Mock data service to simulate T1 Сфера.Код API responses.
-In production, this would be replaced with actual API calls to T1 system.
+Mock data service to simulate Git repository API responses.
+In production, this would be replaced with actual API calls to Git hosting system.
 """
 
 from typing import List, Dict
@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 
 class T1MockDataService:
-    """Service to generate mock data as if from T1 Сфера.Код API."""
+    """Service to generate mock data as if from Git repository API."""
 
     @staticmethod
     def generate_mock_commits(
@@ -252,5 +252,5 @@ class T1MockDataService:
             "pull_requests_created": len(prs),
             "reviews_created": len(reviews),
             "tasks_created": len(tasks),
-            "message": "Mock data from T1 Сфера.Код API generated successfully"
+            "message": "Mock data generated successfully"
         }

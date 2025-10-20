@@ -53,7 +53,7 @@ class TechnicalDebtService:
         commits_with_tests = [c for c in commits if c.has_tests]
         test_coverage_delta = sum(c.test_coverage_delta for c in commits if c.test_coverage_delta)
         
-        # Simulate current test coverage (in real scenario, get from T1 API)
+        # Simulate current test coverage (in real scenario, get from Git API or code analysis)
         base_coverage = 65.0  # Mock base coverage
         current_coverage = max(0, min(100, base_coverage + test_coverage_delta))
         

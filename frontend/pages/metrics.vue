@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>Метрики и аналитика</h1>
-    <p class="subtitle">Анализ эффективности команды на основе данных T1 Сфера.Код</p>
+    <p class="subtitle">Анализ эффективности команды на основе Git-метрик</p>
 
     <div class="metrics-container">
       <!-- Team Effectiveness Score -->
