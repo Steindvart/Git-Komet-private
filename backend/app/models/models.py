@@ -70,6 +70,14 @@ class Commit(Base):
     test_coverage_delta = Column(Float, nullable=True)  # Change in test coverage
     todo_count = Column(Integer, default=0)  # Number of TODO comments added
     
+    # Code churn tracking
+    is_churn = Column(Boolean, default=False)  # If code was modified again within short period
+    churn_days = Column(Integer, nullable=True)  # Days since last modification of same files
+    
+    # Work-life balance tracking
+    is_after_hours = Column(Boolean, default=False)  # Committed outside working hours
+    is_weekend = Column(Boolean, default=False)  # Committed on weekend
+    
     # Relationships
     author = relationship("TeamMember", back_populates="commits")
 
@@ -117,6 +125,7 @@ class CodeReview(Base):
     created_at = Column(DateTime, nullable=False)
     comments_count = Column(Integer, default=0)
     critical_comments = Column(Integer, default=0)  # Number of critical/blocking comments
+    todo_comments = Column(Integer, default=0)  # Number of TODO suggestions in review
     
     # Relationships
     pull_request = relationship("PullRequest", back_populates="reviews")

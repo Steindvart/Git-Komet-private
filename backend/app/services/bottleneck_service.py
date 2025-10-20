@@ -41,7 +41,7 @@ class BottleneckService:
                 "avg_time_in_stage": 0,
                 "affected_tasks_count": 0,
                 "impact_score": 0,
-                "recommendations": ["No data available for the period"],
+                "recommendations": ["Нет данных за указанный период"],
                 "period_start": period_start,
                 "period_end": period_end,
             }
@@ -102,41 +102,41 @@ class BottleneckService:
         
         if bottleneck_stage == "review":
             recommendations.append(
-                f"⚠️ Code review is a bottleneck (avg {avg_time_in_stage:.1f} hours). "
-                "Consider: increasing reviewer capacity, setting review SLAs, or implementing automated checks."
+                f"⚠️ Ревью кода — узкое место (среднее время {avg_time_in_stage:.1f} часов). "
+                "Рассмотрите: увеличение мощности ревьюеров, установку SLA для ревью или внедрение автоматических проверок."
             )
             if avg_time_in_stage > 48:
                 recommendations.append(
-                    "Reviews are taking over 2 days on average. "
-                    "Ensure team members are notified of pending reviews and prioritize review tasks."
+                    "Ревью занимает более 2 дней в среднем. "
+                    "Убедитесь, что члены команды получают уведомления о pending ревью и приоритизируют задачи ревью."
                 )
         elif bottleneck_stage == "development":
             recommendations.append(
-                f"⚠️ Development stage is taking long (avg {avg_time_in_stage:.1f} hours). "
-                "Consider: breaking down tasks, pair programming, or addressing technical debt."
+                f"⚠️ Этап разработки занимает много времени (среднее время {avg_time_in_stage:.1f} часов). "
+                "Рассмотрите: декомпозицию задач, парное программирование или работу с техническим долгом."
             )
         elif bottleneck_stage == "testing":
             recommendations.append(
-                f"⚠️ Testing is a bottleneck (avg {avg_time_in_stage:.1f} hours). "
-                "Consider: increasing test automation, parallel testing, or adding QA resources."
+                f"⚠️ Тестирование — узкое место (среднее время {avg_time_in_stage:.1f} часов). "
+                "Рассмотрите: увеличение автоматизации тестов, параллельное тестирование или добавление QA ресурсов."
             )
         elif bottleneck_stage == "todo":
             recommendations.append(
-                f"Tasks are waiting to be started (avg {avg_time_in_stage:.1f} hours). "
-                "Review backlog prioritization and team capacity."
+                f"Задачи долго ожидают начала работы (среднее время {avg_time_in_stage:.1f} часов). "
+                "Пересмотрите приоритизацию беклога и загруженность команды."
             )
         
         if impact_score > 70:
             recommendations.append(
-                "🚨 High impact bottleneck detected. Immediate action recommended to improve workflow."
+                "🚨 Обнаружено узкое место с высоким влиянием. Рекомендуется немедленное действие для улучшения рабочего процесса."
             )
         elif impact_score > 40:
             recommendations.append(
-                "⚠️ Moderate bottleneck detected. Consider process improvements."
+                "⚠️ Обнаружено умеренное узкое место. Рассмотрите улучшения процесса."
             )
         
         if not recommendations:
-            recommendations.append("No significant bottlenecks detected. Workflow is running smoothly.")
+            recommendations.append("Значительных узких мест не обнаружено. Рабочий процесс идёт гладко.")
         
         # Add stage-specific metrics
         stage_breakdown = {
