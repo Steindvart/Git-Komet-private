@@ -6,7 +6,7 @@ from app.api.endpoints import metrics, repositories, teams
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    description="Git-Komet: Team effectiveness analysis through T1 Сфера.Код metrics"
+    description="Git-Komet: Team effectiveness analysis through Git metrics"
 )
 
 # Set up CORS
@@ -28,7 +28,7 @@ app.include_router(teams.router, prefix=f"{settings.API_V1_STR}/teams", tags=["t
 async def root():
     return {
         "message": "Git-Komet API",
-        "description": "Team effectiveness analysis through T1 Сфера.Код metrics",
+        "description": "Team effectiveness analysis through Git metrics",
         "version": "2.0.0",
         "features": [
             "Team effectiveness scoring",

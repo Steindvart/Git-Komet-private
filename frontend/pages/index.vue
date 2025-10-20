@@ -1,109 +1,117 @@
 <template>
   <div>
-    <h1>Git-Komet Dashboard</h1>
-    <p class="subtitle">Team Effectiveness Analysis Through T1 Сфера.Код Metrics</p>
+    <h1>Панель управления Git-Komet</h1>
+    <p class="subtitle">Умный трекер разработки через анализ Git-метрик</p>
     
     <div class="dashboard-grid">
       <div class="card">
-        <h3>📊 Overview</h3>
-        <p>Analyze team effectiveness through T1 Сфера.Код metrics:</p>
+        <h3>📊 Обзор</h3>
+        <p>Анализируйте эффективность команды через Git-метрики:</p>
         <ul class="feature-list">
-          <li>✓ Team effectiveness scores (0-100)</li>
-          <li>✓ Technical debt tracking</li>
-          <li>✓ Bottleneck identification</li>
-          <li>✓ Alerts and recommendations</li>
+          <li>✓ Оценка эффективности команд (0-100)</li>
+          <li>✓ Отслеживание технического долга</li>
+          <li>✓ Выявление узких мест</li>
+          <li>✓ Забота о сотрудниках (переработки)</li>
+          <li>✓ Алерты и рекомендации</li>
         </ul>
       </div>
 
       <div class="card">
-        <h3>🎯 Quick Stats</h3>
+        <h3>🎯 Быстрая статистика</h3>
         <div class="stats">
           <div class="stat-item">
-            <span class="stat-label">Projects</span>
+            <span class="stat-label">Проекты</span>
             <span class="stat-value">{{ stats.projects }}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Teams</span>
+            <span class="stat-label">Команды</span>
             <span class="stat-value">{{ stats.teams }}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Avg Effectiveness</span>
+            <span class="stat-label">Средняя эффективность</span>
             <span class="stat-value">{{ stats.avgEffectiveness }}/100</span>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <h3>🚀 Quick Actions</h3>
+        <h3>🚀 Быстрые действия</h3>
         <div class="actions">
           <NuxtLink to="/repositories" class="btn btn-primary">
-            Manage Projects
+            Управление проектами
           </NuxtLink>
           <NuxtLink to="/teams" class="btn btn-secondary">
-            Manage Teams
+            Управление командами
           </NuxtLink>
           <NuxtLink to="/metrics" class="btn btn-secondary">
-            View Analytics
+            Просмотр аналитики
           </NuxtLink>
         </div>
       </div>
 
       <div class="card">
-        <h3>🔍 Analysis Types</h3>
+        <h3>🔍 Типы анализа</h3>
         <div class="analysis-types">
           <div class="analysis-item">
             <span class="analysis-icon">📊</span>
             <div class="analysis-info">
-              <strong>Team Effectiveness</strong>
-              <p>Overall performance score with trends and alerts</p>
+              <strong>Эффективность команды</strong>
+              <p>Общая оценка производительности с трендами и алертами</p>
             </div>
           </div>
           <div class="analysis-item">
             <span class="analysis-icon">🔧</span>
             <div class="analysis-info">
-              <strong>Technical Debt</strong>
-              <p>Test coverage, TODO growth, review quality</p>
+              <strong>Технический долг</strong>
+              <p>Покрытие тестами, рост TODO, качество ревью, code churn</p>
             </div>
           </div>
           <div class="analysis-item">
             <span class="analysis-icon">🚧</span>
             <div class="analysis-info">
-              <strong>Bottlenecks</strong>
-              <p>Identify workflow slowdowns and get recommendations</p>
+              <strong>Узкие места</strong>
+              <p>Выявление замедлений в workflow и рекомендации</p>
+            </div>
+          </div>
+          <div class="analysis-item">
+            <span class="analysis-icon">💼</span>
+            <div class="analysis-info">
+              <strong>Забота о сотрудниках</strong>
+              <p>Отслеживание переработок и активности вне рабочего времени</p>
             </div>
           </div>
         </div>
       </div>
 
       <div class="card full-width">
-        <h3>💡 Getting Started</h3>
+        <h3>💡 Начало работы</h3>
         <div class="getting-started">
           <div class="step">
             <span class="step-number">1</span>
             <div class="step-content">
-              <strong>Add a Project</strong>
-              <p>Create a project from T1 Сфера.Код</p>
+              <strong>Добавьте проект</strong>
+              <p>Добавьте Git-репозиторий для анализа</p>
             </div>
           </div>
           <div class="step">
             <span class="step-number">2</span>
             <div class="step-content">
-              <strong>Create a Team</strong>
-              <p>Set up your development team and add members</p>
+              <strong>Создайте команду</strong>
+              <p>Настройте команду разработки и добавьте участников</p>
             </div>
           </div>
           <div class="step">
             <span class="step-number">3</span>
             <div class="step-content">
-              <strong>Generate Mock Data</strong>
-              <p>Simulate T1 API data (commits, PRs, reviews, tasks)</p>
+              <strong>Сгенерируйте демо-данные</strong>
+              <p>Симулируйте данные (коммиты, PR, ревью, задачи)</p>
             </div>
           </div>
           <div class="step">
             <span class="step-number">4</span>
             <div class="step-content">
-              <strong>View Analytics</strong>
-              <p>Explore metrics, trends, and recommendations</p>
+              <strong>Просмотрите аналитику</strong>
+              <p>Изучайте метрики, тренды и рекомендации</p>
             </div>
           </div>
         </div>
@@ -120,14 +128,14 @@ const stats = ref({
 })
 
 onMounted(async () => {
-  // In a real application, fetch these from the API
-  // For now, using placeholder data
+  // В реальном приложении получаем данные из API
+  // Пока используем заглушки
 })
 </script>
 
 <style scoped>
 .subtitle {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 1.125rem;
   margin-bottom: 2rem;
 }
@@ -157,14 +165,14 @@ onMounted(async () => {
 
 .stat-label {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--accent-primary);
 }
 
 .actions {
@@ -182,7 +190,7 @@ onMounted(async () => {
 
 .feature-list li {
   padding: 0.5rem 0;
-  color: #4b5563;
+  color: var(--text-secondary);
 }
 
 .analysis-types {
@@ -196,8 +204,9 @@ onMounted(async () => {
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  background-color: #f9fafb;
+  background-color: var(--bg-tertiary);
   border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
 }
 
 .analysis-icon {
@@ -206,12 +215,12 @@ onMounted(async () => {
 
 .analysis-info strong {
   display: block;
-  color: #111827;
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
 .analysis-info p {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.875rem;
   margin: 0;
 }
@@ -227,15 +236,16 @@ onMounted(async () => {
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  background-color: #f9fafb;
+  background-color: var(--bg-tertiary);
   border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
 }
 
 .step-number {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background-color: var(--primary-color);
+  background-color: var(--accent-secondary);
   color: white;
   display: flex;
   align-items: center;
@@ -246,12 +256,12 @@ onMounted(async () => {
 
 .step-content strong {
   display: block;
-  color: #111827;
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
 .step-content p {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.875rem;
   margin: 0;
 }

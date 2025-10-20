@@ -1,13 +1,13 @@
 <template>
   <div>
-    <h1>Metrics & Analytics</h1>
-    <p class="subtitle">Team effectiveness analysis from T1 Сфера.Код</p>
+    <h1>Метрики и аналитика</h1>
+    <p class="subtitle">Анализ эффективности команды на основе Git-метрик</p>
 
     <div class="metrics-container">
       <!-- Team Effectiveness Score -->
       <div class="card full-width">
-        <h3>📊 Team Effectiveness Score</h3>
-        <p>Overall team performance indicator (0-100, similar to SonarQube)</p>
+        <h3>📊 Оценка эффективности команды</h3>
+        <p>Общий показатель производительности команды (0-100, аналогично SonarQube)</p>
         <div class="score-display">
           <div class="score-circle">
             <span class="score-value">{{ effectivenessScore }}</span>
@@ -15,16 +15,16 @@
           </div>
           <div class="score-details">
             <div class="score-item">
-              <span class="label">Trend:</span>
-              <span class="value">{{ trend }}</span>
+              <span class="label">Тренд:</span>
+              <span class="value">улучшение</span>
             </div>
             <div class="score-item">
-              <span class="label">Active Contributors:</span>
+              <span class="label">Активные участники:</span>
               <span class="value">{{ activeContributors }}</span>
             </div>
             <div class="score-item">
-              <span class="label">Avg Review Time:</span>
-              <span class="value">{{ avgReviewTime }}h</span>
+              <span class="label">Среднее время ревью:</span>
+              <span class="value">{{ avgReviewTime }}ч</span>
             </div>
           </div>
         </div>
@@ -34,109 +34,141 @@
         </div>
       </div>
 
-      <!-- Technical Debt Analysis -->
+      <!-- Work-Life Balance -->
       <div class="card">
-        <h3>🔧 Technical Debt Analysis</h3>
+        <h3>💼 Забота о сотрудниках</h3>
+        <p>Отслеживание переработок и активности вне рабочего времени</p>
         <div class="metric-group">
           <div class="metric-item">
-            <span class="metric-label">Test Coverage</span>
+            <span class="metric-label">Коммиты после рабочего времени</span>
+            <span class="metric-value">{{ afterHoursPercentage }}% <span class="trend" :class="afterHoursPercentage > 30 ? 'up' : 'stable'">{{ afterHoursPercentage > 30 ? '↑' : '→' }}</span></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Коммиты в выходные</span>
+            <span class="metric-value">{{ weekendPercentage }}% <span class="trend" :class="weekendPercentage > 20 ? 'up' : 'stable'">{{ weekendPercentage > 20 ? '↑' : '→' }}</span></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Пики активности</span>
+            <span class="metric-value">{{ peakHours }}</span>
+          </div>
+        </div>
+        <div v-if="afterHoursPercentage > 30 || weekendPercentage > 20" class="alert alert-warning">
+          <strong>⚠️</strong> Обнаружена высокая активность вне рабочего времени. Проверьте нагрузку на команду.
+        </div>
+      </div>
+
+      <!-- Technical Debt Analysis -->
+      <div class="card">
+        <h3>🔧 Анализ технического долга</h3>
+        <div class="metric-group">
+          <div class="metric-item">
+            <span class="metric-label">Покрытие тестами</span>
             <div class="metric-bar">
-              <div class="bar-fill" :style="{ width: '65%' }"></div>
+              <div class="bar-fill" :style="{ width: '67%' }"></div>
             </div>
-            <span class="metric-value">65% <span class="trend up">↑</span></span>
+            <span class="metric-value">67% <span class="trend up">↑</span></span>
           </div>
           <div class="metric-item">
-            <span class="metric-label">TODO Count</span>
-            <span class="metric-value">42 <span class="trend stable">→</span></span>
+            <span class="metric-label">TODO в коде</span>
+            <span class="metric-value">{{ todoInCode }} <span class="trend stable">→</span></span>
           </div>
           <div class="metric-item">
-            <span class="metric-label">Review Comment Density</span>
-            <span class="metric-value">3.2 per PR <span class="trend down">↓</span></span>
+            <span class="metric-label">TODO в ревью</span>
+            <span class="metric-value">{{ todoInReviews }} <span class="trend up">↑</span></span>
           </div>
           <div class="metric-item">
-            <span class="metric-label">Debt Score</span>
-            <span class="metric-value debt-score">72/100</span>
+            <span class="metric-label">Code Churn (переписывание)</span>
+            <span class="metric-value">{{ churnRate }}% <span class="trend" :class="churnRate > 25 ? 'up' : 'stable'">{{ churnRate > 25 ? '↑' : '→' }}</span></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Плотность комментариев в ревью</span>
+            <span class="metric-value">{{ reviewCommentDensity }} на PR <span class="trend down">↓</span></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Оценка долга</span>
+            <span class="metric-value debt-score">{{ debtScore }}/100</span>
           </div>
         </div>
         <div class="recommendations">
-          <h4>💡 Recommendations:</h4>
+          <h4>💡 Рекомендации:</h4>
           <ul>
-            <li>Test coverage is improving - keep it up!</li>
-            <li>TODO count is stable - schedule time to address technical debt</li>
+            <li>Покрытие тестами улучшается - продолжайте в том же духе!</li>
+            <li>TODO в ревью растут - рассмотрите оформление их в отдельные тикеты</li>
+            <li v-if="churnRate > 25">⚠️ Высокий уровень переписывания кода - проверьте качество планирования</li>
           </ul>
         </div>
       </div>
 
       <!-- Bottleneck Analysis -->
       <div class="card">
-        <h3>🚧 Bottleneck Analysis</h3>
-        <p>Workflow stage with longest average time</p>
+        <h3>🚧 Анализ узких мест</h3>
+        <p>Этап workflow с самым долгим средним временем</p>
         <div class="bottleneck-info">
           <div class="bottleneck-stage">
             <span class="stage-icon">🔍</span>
-            <span class="stage-name">Code Review</span>
+            <span class="stage-name">Ревью кода</span>
           </div>
           <div class="bottleneck-stats">
             <div class="stat">
-              <span class="stat-label">Avg Time:</span>
-              <span class="stat-value">48.5 hours</span>
+              <span class="stat-label">Среднее время:</span>
+              <span class="stat-value">48.5 часов</span>
             </div>
             <div class="stat">
-              <span class="stat-label">Affected Tasks:</span>
+              <span class="stat-label">Затронутых задач:</span>
               <span class="stat-value">15</span>
             </div>
             <div class="stat">
-              <span class="stat-label">Impact Score:</span>
+              <span class="stat-label">Оценка влияния:</span>
               <span class="stat-value impact-high">68/100</span>
             </div>
           </div>
         </div>
         <div class="stage-breakdown">
-          <h4>Stage Breakdown:</h4>
+          <h4>Распределение по этапам:</h4>
           <div class="stage-item">
             <span class="stage-label">📋 TODO</span>
             <div class="stage-bar">
               <div class="bar-fill" style="width: 20%"></div>
             </div>
-            <span class="stage-time">12h</span>
+            <span class="stage-time">12ч</span>
           </div>
           <div class="stage-item">
-            <span class="stage-label">💻 Development</span>
+            <span class="stage-label">💻 Разработка</span>
             <div class="stage-bar">
               <div class="bar-fill" style="width: 45%"></div>
             </div>
-            <span class="stage-time">28h</span>
+            <span class="stage-time">28ч</span>
           </div>
           <div class="stage-item">
-            <span class="stage-label">👁️ Review</span>
+            <span class="stage-label">👁️ Ревью</span>
             <div class="stage-bar">
               <div class="bar-fill warning" style="width: 80%"></div>
             </div>
-            <span class="stage-time">48h</span>
+            <span class="stage-time">48ч</span>
           </div>
           <div class="stage-item">
-            <span class="stage-label">🧪 Testing</span>
+            <span class="stage-label">🧪 Тестирование</span>
             <div class="stage-bar">
               <div class="bar-fill" style="width: 25%"></div>
             </div>
-            <span class="stage-time">15h</span>
+            <span class="stage-time">15ч</span>
           </div>
         </div>
         <div class="recommendations">
-          <h4>💡 Recommendations:</h4>
+          <h4>💡 Рекомендации:</h4>
           <ul>
-            <li>⚠️ Code review is taking over 2 days on average</li>
-            <li>Consider: increasing reviewer capacity or setting review SLAs</li>
+            <li>⚠️ Ревью кода занимает более 2 дней в среднем</li>
+            <li>Рассмотрите: увеличение мощности ревьюеров или установку SLA для ревью</li>
           </ul>
         </div>
       </div>
 
       <!-- Trend Charts Placeholder -->
       <div class="card full-width">
-        <h3>📈 Trends Over Time</h3>
+        <h3>📈 Тренды во времени</h3>
         <div class="chart-placeholder">
-          <p>📊 Historical trend visualization</p>
-          <p class="note">Charts showing effectiveness score, technical debt, and bottlenecks over time</p>
+          <p>📊 Визуализация исторических трендов</p>
+          <p class="note">Графики, показывающие эффективность, технический долг и узкие места во времени</p>
         </div>
       </div>
     </div>
@@ -144,16 +176,27 @@
 </template>
 
 <script setup lang="ts">
-// Mock data - in real app, fetch from API
-const effectivenessScore = ref(72)
-const trend = ref('improving')
+// Демо-данные - в реальном приложении получаем из API
+const effectivenessScore = ref(74)
 const activeContributors = ref(8)
 const avgReviewTime = ref(24.5)
 const hasAlert = ref(true)
 const alertSeverity = ref('warning')
-const alertMessage = ref('Team effectiveness could be improved. Consider process optimization.')
+const alertMessage = ref('Эффективность команды может быть улучшена. Рассмотрите оптимизацию процессов.')
 
-// In real implementation, fetch from:
+// Work-life balance metrics
+const afterHoursPercentage = ref(28)
+const weekendPercentage = ref(15)
+const peakHours = ref('18:00-20:00')
+
+// Technical debt metrics
+const todoInCode = ref(42)
+const todoInReviews = ref(18)
+const churnRate = ref(22)
+const reviewCommentDensity = ref(3.2)
+const debtScore = ref(75)
+
+// В реальной реализации, получаем данные из:
 // GET /api/v1/metrics/team/{id}/effectiveness
 // GET /api/v1/metrics/team/{id}/technical-debt
 // GET /api/v1/metrics/team/{id}/bottlenecks
@@ -161,7 +204,7 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
 
 <style scoped>
 .subtitle {
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
 }
 
@@ -186,7 +229,7 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-primary) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -215,17 +258,17 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
   display: flex;
   justify-content: space-between;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .score-item .label {
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .score-item .value {
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .alert {
@@ -235,15 +278,15 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
 }
 
 .alert-warning {
-  background-color: #fef3c7;
-  border-left: 4px solid #f59e0b;
-  color: #92400e;
+  background-color: rgba(210, 153, 34, 0.15);
+  border-left: 4px solid var(--warning);
+  color: var(--text-primary);
 }
 
 .alert-critical {
-  background-color: #fee2e2;
-  border-left: 4px solid #ef4444;
-  color: #991b1b;
+  background-color: rgba(248, 81, 73, 0.15);
+  border-left: 4px solid var(--danger);
+  color: var(--text-primary);
 }
 
 .metric-group {
@@ -262,35 +305,35 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
 .metric-label {
   flex: 1;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--text-secondary);
 }
 
 .metric-value {
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .debt-score {
-  color: #4f46e5;
+  color: var(--accent-primary);
   font-size: 1.125rem;
 }
 
 .metric-bar {
   flex: 2;
   height: 8px;
-  background-color: #e5e7eb;
+  background-color: var(--bg-tertiary);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 100%);
+  background: linear-gradient(90deg, var(--accent-secondary) 0%, var(--accent-primary) 100%);
   transition: width 0.3s ease;
 }
 
 .bar-fill.warning {
-  background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%);
+  background: linear-gradient(90deg, var(--warning) 0%, var(--danger) 100%);
 }
 
 .trend {
@@ -299,15 +342,15 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
 }
 
 .trend.up {
-  color: #10b981;
+  color: var(--danger);
 }
 
 .trend.down {
-  color: #ef4444;
+  color: var(--success);
 }
 
 .trend.stable {
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .bottleneck-info {
@@ -319,9 +362,10 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background-color: #fef3c7;
+  background-color: rgba(210, 153, 34, 0.15);
   border-radius: 0.5rem;
   margin-bottom: 1rem;
+  border: 1px solid rgba(210, 153, 34, 0.3);
 }
 
 .stage-icon {
@@ -331,7 +375,7 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
 .stage-name {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #92400e;
+  color: var(--text-primary);
 }
 
 .bottleneck-stats {
@@ -349,17 +393,17 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
 
 .stat-label {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .stat-value {
   font-weight: 600;
   font-size: 1.125rem;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .impact-high {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .stage-breakdown {
@@ -369,7 +413,7 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
 .stage-breakdown h4 {
   margin-bottom: 1rem;
   font-size: 1rem;
-  color: #4b5563;
+  color: var(--text-secondary);
 }
 
 .stage-item {
@@ -382,13 +426,13 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
 .stage-label {
   min-width: 120px;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--text-secondary);
 }
 
 .stage-bar {
   flex: 1;
   height: 8px;
-  background-color: #e5e7eb;
+  background-color: var(--bg-tertiary);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -397,21 +441,22 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
   min-width: 50px;
   text-align: right;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .recommendations {
   margin-top: 1.5rem;
   padding: 1rem;
-  background-color: #f9fafb;
+  background-color: var(--bg-tertiary);
   border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
 }
 
 .recommendations h4 {
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #4b5563;
+  color: var(--text-secondary);
 }
 
 .recommendations ul {
@@ -422,18 +467,18 @@ const alertMessage = ref('Team effectiveness could be improved. Consider process
 
 .recommendations li {
   padding: 0.5rem 0;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
 .chart-placeholder {
-  background: #f9fafb;
-  border: 2px dashed var(--border-color);
+  background: var(--bg-tertiary);
+  border: 2px dashed var(--border-primary);
   border-radius: 0.5rem;
   padding: 3rem;
   text-align: center;
   margin-top: 1rem;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .note {

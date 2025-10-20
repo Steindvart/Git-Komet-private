@@ -1,6 +1,6 @@
 """
-Mock data service to simulate T1 Сфера.Код API responses.
-In production, this would be replaced with actual API calls to T1 system.
+Mock data service to simulate Git repository API responses.
+In production, this would be replaced with actual API calls to Git hosting system.
 """
 
 from typing import List, Dict
@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 
 class T1MockDataService:
-    """Service to generate mock data as if from T1 Сфера.Код API."""
+    """Service to generate mock data as if from Git repository API."""
 
     @staticmethod
     def generate_mock_commits(
@@ -39,12 +39,22 @@ class T1MockDataService:
             # Simulate different commit patterns
             has_tests = random.random() > 0.4  # 60% have tests
             test_coverage_delta = random.uniform(-2, 5) if has_tests else random.uniform(-5, 0)
-            todo_count = random.choice([0, 0, 0, 1, 2])  # Most commits have no TODOs
+            todo_count = random.choice([0, 0, 0, 1, 2, 3])  # Most commits have no TODOs
+            
+            # Simulate code churn (20% of commits modify recently changed code)
+            is_churn = random.random() > 0.8
+            churn_days = random.randint(1, 7) if is_churn else None
+            
+            # Simulate work-life balance - check if commit is after hours or weekend
+            hour = commit_date.hour
+            weekday = commit_date.weekday()
+            is_after_hours = hour < 9 or hour > 18  # Outside 9-18
+            is_weekend = weekday >= 5  # Saturday=5, Sunday=6
             
             commit = Commit(
                 external_id=f"mock_commit_{team_id}_{i}_{random.randint(1000, 9999)}",
                 author_id=member.id,
-                message=f"Mock commit {i}: {random.choice(['Fix bug', 'Add feature', 'Refactor', 'Update tests'])}",
+                message=f"Mock commit {i}: {random.choice(['Fix bug', 'Add feature', 'Refactor', 'Update tests', 'TODO: Optimize performance'])}",
                 author_email=member.email,
                 author_name=member.name,
                 committed_at=commit_date,
@@ -53,7 +63,11 @@ class T1MockDataService:
                 deletions=random.randint(5, 100),
                 has_tests=has_tests,
                 test_coverage_delta=test_coverage_delta,
-                todo_count=todo_count
+                todo_count=todo_count,
+                is_churn=is_churn,
+                churn_days=churn_days,
+                is_after_hours=is_after_hours,
+                is_weekend=is_weekend
             )
             db.add(commit)
             commits.append(commit)
@@ -135,8 +149,10 @@ class T1MockDataService:
                 reviewer = random.choice(team.members)
                 state = random.choice(["approved", "approved", "changes_requested", "commented"])
                 
-                comments_count = random.randint(0, 10)
+                comments_count = random.randint(0, 12)
                 critical_comments = random.randint(0, min(3, comments_count))
+                # 30% of reviews contain TODO suggestions
+                todo_comments = random.randint(0, 3) if random.random() > 0.7 else 0
                 
                 review = CodeReview(
                     pull_request_id=pr_id,
@@ -144,7 +160,8 @@ class T1MockDataService:
                     state=state,
                     created_at=datetime.utcnow() - timedelta(hours=random.uniform(1, 48)),
                     comments_count=comments_count,
-                    critical_comments=critical_comments
+                    critical_comments=critical_comments,
+                    todo_comments=todo_comments
                 )
                 db.add(review)
                 reviews.append(review)
@@ -235,5 +252,5 @@ class T1MockDataService:
             "pull_requests_created": len(prs),
             "reviews_created": len(reviews),
             "tasks_created": len(tasks),
-            "message": "Mock data from T1 Сфера.Код API generated successfully"
+            "message": "Mock data generated successfully"
         }

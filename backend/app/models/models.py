@@ -5,11 +5,11 @@ from app.db.session import Base
 
 
 class Project(Base):
-    """Project from T1 Сфера.Код - represents a project/repository"""
+    """Project - represents a Git repository"""
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String, unique=True, index=True, nullable=False)  # ID from T1 API
+    external_id = Column(String, unique=True, index=True, nullable=False)  # External project ID
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -38,7 +38,7 @@ class TeamMember(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
-    external_id = Column(String, index=True, nullable=True)  # ID from T1 API
+    external_id = Column(String, index=True, nullable=True)  # External user ID
     email = Column(String, nullable=False)
     name = Column(String, nullable=False)
     role = Column(String, nullable=True)
@@ -53,11 +53,11 @@ class TeamMember(Base):
 
 
 class Commit(Base):
-    """Commit data from T1 Сфера.Код"""
+    """Commit data from Git repository"""
     __tablename__ = "commits"
 
     id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String, unique=True, index=True, nullable=False)  # SHA from T1 API
+    external_id = Column(String, unique=True, index=True, nullable=False)  # Commit SHA
     author_id = Column(Integer, ForeignKey("team_members.id"), nullable=True)
     message = Column(String, nullable=False)
     author_email = Column(String, nullable=False)
@@ -70,16 +70,24 @@ class Commit(Base):
     test_coverage_delta = Column(Float, nullable=True)  # Change in test coverage
     todo_count = Column(Integer, default=0)  # Number of TODO comments added
     
+    # Code churn tracking
+    is_churn = Column(Boolean, default=False)  # If code was modified again within short period
+    churn_days = Column(Integer, nullable=True)  # Days since last modification of same files
+    
+    # Work-life balance tracking
+    is_after_hours = Column(Boolean, default=False)  # Committed outside working hours
+    is_weekend = Column(Boolean, default=False)  # Committed on weekend
+    
     # Relationships
     author = relationship("TeamMember", back_populates="commits")
 
 
 class PullRequest(Base):
-    """Pull Request data from T1 Сфера.Код"""
+    """Pull Request data from Git repository"""
     __tablename__ = "pull_requests"
 
     id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String, unique=True, index=True, nullable=False)  # ID from T1 API
+    external_id = Column(String, unique=True, index=True, nullable=False)  # PR ID
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     author_id = Column(Integer, ForeignKey("team_members.id"), nullable=True)
     title = Column(String, nullable=False)
@@ -107,7 +115,7 @@ class PullRequest(Base):
 
 
 class CodeReview(Base):
-    """Code Review data from T1 Сфера.Код"""
+    """Code Review data from Git repository"""
     __tablename__ = "code_reviews"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -117,6 +125,7 @@ class CodeReview(Base):
     created_at = Column(DateTime, nullable=False)
     comments_count = Column(Integer, default=0)
     critical_comments = Column(Integer, default=0)  # Number of critical/blocking comments
+    todo_comments = Column(Integer, default=0)  # Number of TODO suggestions in review
     
     # Relationships
     pull_request = relationship("PullRequest", back_populates="reviews")
@@ -124,11 +133,11 @@ class CodeReview(Base):
 
 
 class Task(Base):
-    """Task/Issue data from T1 Сфера.Код"""
+    """Task/Issue data from Git repository"""
     __tablename__ = "tasks"
 
     id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String, unique=True, index=True, nullable=False)  # ID from T1 API
+    external_id = Column(String, unique=True, index=True, nullable=False)  # Issue/Task ID
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     assignee_id = Column(Integer, ForeignKey("team_members.id"), nullable=True)
     title = Column(String, nullable=False)
