@@ -1,17 +1,17 @@
 <template>
   <div>
-    <h1>Projects</h1>
-    <p class="subtitle">Projects from T1 Сфера.Код</p>
+    <h1>Проекты</h1>
+    <p class="subtitle">Проекты из T1 Сфера.Код</p>
 
     <div class="actions-bar">
       <button class="btn btn-primary" @click="showAddModal = true">
-        + Add Project
+        + Добавить проект
       </button>
     </div>
 
     <div class="projects-list">
       <div v-if="projects.length === 0" class="empty-state">
-        <p>No projects yet. Add your first project from T1 Сфера.Код!</p>
+        <p>Пока нет проектов. Добавьте ваш первый проект из T1 Сфера.Код!</p>
       </div>
       
       <div v-else class="card-grid">
@@ -21,10 +21,10 @@
           <p v-if="project.description" class="project-description">{{ project.description }}</p>
           <div class="card-actions">
             <button class="btn btn-secondary" @click="generateMockData(project.id)">
-              Generate Mock Data
+              Сгенерировать демо-данные
             </button>
             <button class="btn" @click="deleteProject(project.id)">
-              Delete
+              Удалить
             </button>
           </div>
         </div>
@@ -34,24 +34,24 @@
     <!-- Add Project Modal -->
     <div v-if="showAddModal" class="modal">
       <div class="modal-content">
-        <h2>Add Project</h2>
-        <p class="modal-note">Add a project from T1 Сфера.Код</p>
+        <h2>Добавить проект</h2>
+        <p class="modal-note">Добавьте проект из T1 Сфера.Код</p>
         <form @submit.prevent="addProject">
           <div class="form-group">
-            <label>Name</label>
+            <label>Название</label>
             <input v-model="newProject.name" type="text" required />
           </div>
           <div class="form-group">
-            <label>External ID (T1 Project ID)</label>
+            <label>Внешний ID (ID проекта в T1)</label>
             <input v-model="newProject.external_id" type="text" required />
           </div>
           <div class="form-group">
-            <label>Description</label>
+            <label>Описание</label>
             <textarea v-model="newProject.description"></textarea>
           </div>
           <div class="modal-actions">
-            <button type="submit" class="btn btn-primary">Add</button>
-            <button type="button" class="btn" @click="showAddModal = false">Cancel</button>
+            <button type="submit" class="btn btn-primary">Добавить</button>
+            <button type="button" class="btn" @click="showAddModal = false">Отмена</button>
           </div>
         </form>
       </div>
@@ -70,25 +70,25 @@ const newProject = ref({
 
 const addProject = async () => {
   // API call: POST /api/v1/projects
-  console.log('Adding project:', newProject.value)
+  console.log('Добавление проекта:', newProject.value)
   showAddModal.value = false
   newProject.value = { name: '', external_id: '', description: '' }
 }
 
 const generateMockData = async (id: number) => {
   // API call: POST /api/v1/projects/{id}/generate-mock-data?team_id=1
-  console.log('Generating mock T1 data for project:', id)
-  alert('Mock data generation would create:\n- Commits with test coverage tracking\n- Pull requests with review times\n- Code reviews\n- Tasks with bottleneck information')
+  console.log('Генерация демо-данных T1 для проекта:', id)
+  alert('Генерация демо-данных создаст:\n- Коммиты с отслеживанием покрытия тестами\n- Pull Request с временем ревью\n- Ревью кода\n- Задачи с информацией об узких местах')
 }
 
 const deleteProject = async (id: number) => {
-  console.log('Deleting project:', id)
+  console.log('Удаление проекта:', id)
 }
 </script>
 
 <style scoped>
 .subtitle {
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
 }
 
@@ -104,14 +104,14 @@ const deleteProject = async (id: number) => {
 
 .project-id {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-family: monospace;
   margin: 0.5rem 0;
 }
 
 .project-description {
   margin: 0.5rem 0;
-  color: #4b5563;
+  color: var(--text-secondary);
 }
 
 .card-actions {
@@ -123,7 +123,7 @@ const deleteProject = async (id: number) => {
 .empty-state {
   text-align: center;
   padding: 3rem;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .modal {
@@ -132,7 +132,7 @@ const deleteProject = async (id: number) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,7 +140,8 @@ const deleteProject = async (id: number) => {
 }
 
 .modal-content {
-  background: white;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   padding: 2rem;
   border-radius: 0.5rem;
   max-width: 500px;
@@ -148,7 +149,7 @@ const deleteProject = async (id: number) => {
 }
 
 .modal-note {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.875rem;
   margin-bottom: 1rem;
 }
@@ -161,14 +162,23 @@ const deleteProject = async (id: number) => {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
+  color: var(--text-primary);
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-primary);
   border-radius: 0.375rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
 }
 
 .form-group textarea {

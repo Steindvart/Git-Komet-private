@@ -7,10 +7,10 @@
             <h2>Git-Komet</h2>
           </NuxtLink>
           <div class="nav-links">
-            <NuxtLink to="/">Dashboard</NuxtLink>
-            <NuxtLink to="/repositories">Projects</NuxtLink>
-            <NuxtLink to="/teams">Teams</NuxtLink>
-            <NuxtLink to="/metrics">Analytics</NuxtLink>
+            <NuxtLink to="/">Главная</NuxtLink>
+            <NuxtLink to="/repositories">Проекты</NuxtLink>
+            <NuxtLink to="/teams">Команды</NuxtLink>
+            <NuxtLink to="/metrics">Аналитика</NuxtLink>
           </div>
         </div>
       </div>
@@ -22,7 +22,7 @@
     </main>
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2024 Git-Komet. Team Effectiveness Analysis System.</p>
+        <p>&copy; 2024 Git-Komet. Система анализа эффективности команд разработки.</p>
       </div>
     </footer>
   </div>
@@ -30,8 +30,8 @@
 
 <style scoped>
 .navbar {
-  background-color: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
   padding: 1rem 0;
 }
 
@@ -43,7 +43,7 @@
 
 .logo {
   text-decoration: none;
-  color: var(--primary-color);
+  color: var(--text-primary);
 }
 
 .logo h2 {
@@ -58,13 +58,14 @@
 
 .nav-links a {
   text-decoration: none;
-  color: var(--text-color);
+  color: var(--text-secondary);
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .nav-links a:hover {
-  color: var(--primary-color);
+  color: var(--text-primary);
+  text-decoration: none;
 }
 
 .main-content {
@@ -73,10 +74,10 @@
 }
 
 .footer {
-  background-color: white;
-  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
   padding: 2rem 0;
   text-align: center;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 </style>
