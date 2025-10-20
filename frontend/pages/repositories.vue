@@ -1,29 +1,29 @@
 <template>
   <div>
-    <h1>Repositories</h1>
-    <p class="subtitle">Manage your Git repositories for analysis</p>
+    <h1>Projects</h1>
+    <p class="subtitle">Projects from T1 Сфера.Код</p>
 
     <div class="actions-bar">
       <button class="btn btn-primary" @click="showAddModal = true">
-        + Add Repository
+        + Add Project
       </button>
     </div>
 
-    <div class="repositories-list">
-      <div v-if="repositories.length === 0" class="empty-state">
-        <p>No repositories yet. Add your first repository to start analyzing!</p>
+    <div class="projects-list">
+      <div v-if="projects.length === 0" class="empty-state">
+        <p>No projects yet. Add your first project from T1 Сфера.Код!</p>
       </div>
       
       <div v-else class="card-grid">
-        <div v-for="repo in repositories" :key="repo.id" class="card">
-          <h3>{{ repo.name }}</h3>
-          <p class="repo-url">{{ repo.url }}</p>
-          <p v-if="repo.description" class="repo-description">{{ repo.description }}</p>
+        <div v-for="project in projects" :key="project.id" class="card">
+          <h3>{{ project.name }}</h3>
+          <p class="project-id">ID: {{ project.external_id }}</p>
+          <p v-if="project.description" class="project-description">{{ project.description }}</p>
           <div class="card-actions">
-            <button class="btn btn-secondary" @click="syncRepository(repo.id)">
-              Sync Commits
+            <button class="btn btn-secondary" @click="generateMockData(project.id)">
+              Generate Mock Data
             </button>
-            <button class="btn" @click="deleteRepository(repo.id)">
+            <button class="btn" @click="deleteProject(project.id)">
               Delete
             </button>
           </div>
@@ -31,22 +31,23 @@
       </div>
     </div>
 
-    <!-- Add Repository Modal (simplified) -->
+    <!-- Add Project Modal -->
     <div v-if="showAddModal" class="modal">
       <div class="modal-content">
-        <h2>Add Repository</h2>
-        <form @submit.prevent="addRepository">
+        <h2>Add Project</h2>
+        <p class="modal-note">Add a project from T1 Сфера.Код</p>
+        <form @submit.prevent="addProject">
           <div class="form-group">
             <label>Name</label>
-            <input v-model="newRepo.name" type="text" required />
+            <input v-model="newProject.name" type="text" required />
           </div>
           <div class="form-group">
-            <label>URL</label>
-            <input v-model="newRepo.url" type="text" required />
+            <label>External ID (T1 Project ID)</label>
+            <input v-model="newProject.external_id" type="text" required />
           </div>
           <div class="form-group">
             <label>Description</label>
-            <textarea v-model="newRepo.description"></textarea>
+            <textarea v-model="newProject.description"></textarea>
           </div>
           <div class="modal-actions">
             <button type="submit" class="btn btn-primary">Add</button>
@@ -59,28 +60,29 @@
 </template>
 
 <script setup lang="ts">
-const config = useRuntimeConfig()
 const showAddModal = ref(false)
-const repositories = ref([])
-const newRepo = ref({
+const projects = ref([])
+const newProject = ref({
   name: '',
-  url: '',
+  external_id: '',
   description: ''
 })
 
-const addRepository = async () => {
-  // API call would go here
-  console.log('Adding repository:', newRepo.value)
+const addProject = async () => {
+  // API call: POST /api/v1/projects
+  console.log('Adding project:', newProject.value)
   showAddModal.value = false
-  newRepo.value = { name: '', url: '', description: '' }
+  newProject.value = { name: '', external_id: '', description: '' }
 }
 
-const syncRepository = async (id: number) => {
-  console.log('Syncing repository:', id)
+const generateMockData = async (id: number) => {
+  // API call: POST /api/v1/projects/{id}/generate-mock-data?team_id=1
+  console.log('Generating mock T1 data for project:', id)
+  alert('Mock data generation would create:\n- Commits with test coverage tracking\n- Pull requests with review times\n- Code reviews\n- Tasks with bottleneck information')
 }
 
-const deleteRepository = async (id: number) => {
-  console.log('Deleting repository:', id)
+const deleteProject = async (id: number) => {
+  console.log('Deleting project:', id)
 }
 </script>
 
@@ -100,14 +102,14 @@ const deleteRepository = async (id: number) => {
   gap: 1.5rem;
 }
 
-.repo-url {
+.project-id {
   font-size: 0.875rem;
   color: #6b7280;
   font-family: monospace;
   margin: 0.5rem 0;
 }
 
-.repo-description {
+.project-description {
   margin: 0.5rem 0;
   color: #4b5563;
 }
@@ -143,6 +145,12 @@ const deleteRepository = async (id: number) => {
   border-radius: 0.5rem;
   max-width: 500px;
   width: 90%;
+}
+
+.modal-note {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
 }
 
 .form-group {

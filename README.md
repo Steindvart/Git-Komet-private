@@ -1,13 +1,27 @@
 # Git-Komet
 
 Система автооценки эффективности команд через анализ Git-метрик.
-Team Effectiveness Analysis System Through Git Metrics.
+Team Effectiveness Analysis System Through Git Metrics from T1 Сфера.Код.
 
 ## 📋 Описание / Description
 
-Git-Komet - это система для анализа эффективности работы команд разработки через метрики Git-репозиториев. Проект разработан для участия в хакатоне на тему "Разработайте систему автооценки эффективности команд через анализ Git-метрик".
+Git-Komet - это система для анализа эффективности работы команд разработки через метрики из T1 Сфера.Код. Проект разработан для участия в хакатоне на тему "Разработайте систему автооценки эффективности команд через анализ Git-метрик".
 
-Git-Komet is a system for analyzing development team effectiveness through Git repository metrics. The project is developed for a hackathon on the theme "Develop a system for automatic team effectiveness evaluation through Git metrics analysis".
+Git-Komet is a system for analyzing development team effectiveness through metrics from T1 Сфера.Код (Sphere.Code). The project is developed for a hackathon on the theme "Develop a system for automatic team effectiveness evaluation through Git metrics analysis".
+
+### Интеграция с T1 Сфера.Код / T1 Sphere.Code Integration
+
+Система интегрируется с T1 Сфера.Код и собирает данные о:
+- Коммитах (commits)
+- Pull Request'ах
+- Code Review
+- Задачах (tasks/issues)
+
+The system integrates with T1 Sphere.Code and collects data about:
+- Commits
+- Pull Requests
+- Code Reviews  
+- Tasks/Issues
 
 ## 🚀 Стек технологий / Tech Stack
 
@@ -16,8 +30,8 @@ Git-Komet is a system for analyzing development team effectiveness through Git r
 - **FastAPI** - Современный, быстрый веб-фреймворк для создания API
 - **SQLAlchemy** - ORM для работы с базой данных
 - **SQLite** - Легковесная база данных для хранения метрик
-- **GitPython** - Библиотека для взаимодействия с Git-репозиториями
 - **Pandas/NumPy** - Анализ и обработка данных
+- **Mock T1 API** - Заглушка для симуляции данных из T1 Сфера.Код
 
 ### Frontend
 - **Vue.js 3** - Прогрессивный JavaScript-фреймворк
@@ -39,6 +53,10 @@ Git-Komet/
 │   │   ├── models/          # SQLAlchemy models
 │   │   ├── schemas/         # Pydantic schemas
 │   │   ├── services/        # Business logic
+│   │   │   ├── team_effectiveness_service.py
+│   │   │   ├── technical_debt_service.py
+│   │   │   ├── bottleneck_service.py
+│   │   │   └── t1_mock_service.py
 │   │   └── main.py         # FastAPI application
 │   ├── tests/               # Tests
 │   ├── requirements.txt     # Python dependencies
@@ -130,26 +148,61 @@ Frontend будет доступен по адресу: http://localhost:3000
 
 ### Основные функции / Main Features
 
-- ✅ **Управление репозиториями** - Добавление и синхронизация Git-репозиториев
+- ✅ **Интеграция с T1 Сфера.Код** - Получение данных из T1 API (с mock-данными)
 - ✅ **Управление командами** - Создание команд и добавление участников
-- ✅ **Анализ коммитов** - Сбор и анализ метрик коммитов
-- ✅ **Метрики эффективности** - Расчет показателей эффективности команд
+- ✅ **Анализ эффективности команд** - Комплексная оценка производительности (0-100)
+- ✅ **Анализ технического долга** - Отслеживание покрытия тестами, TODO, качества ревью
+- ✅ **Анализ узких мест** - Выявление bottleneck'ов в workflow (review, development, testing)
 - ✅ **Визуализация данных** - Графики и дашборды для отображения метрик
+- ✅ **Алерты и рекомендации** - Автоматические уведомления о проблемах
+- ✅ **Тренды** - Отслеживание изменений метрик во времени
 - ✅ **RESTful API** - Полноценный API для интеграции
 
 ### Анализируемые метрики / Analyzed Metrics
 
-- 📈 **Частота коммитов** (Commit Frequency)
-- 📊 **Изменения кода** (Code Churn)
-- 👥 **Активные участники** (Active Contributors)
-- 📝 **Размер коммитов** (Commit Size)
-- ⏱️ **Временные паттерны** (Time Patterns)
+#### 1. Team Effectiveness Score (Оценка эффективности команды)
+- 📈 **Общий балл эффективности** (0-100) - Similar to SonarQube
+- 📊 **Активность команды** - Commits, PRs, active contributors
+- ⏱️ **Скорость ревью** - Average time to first review
+- 👥 **Коллаборация** - Team collaboration metrics
+- 🚨 **Алерты** - Automated alerts when scores drop
+
+#### 2. Technical Debt Analysis (Анализ технического долга)
+- 🧪 **Test Coverage Trends** - Tracking test coverage changes
+- 📝 **TODO Growth** - Monitoring TODO comments accumulation
+- 💬 **Review Quality** - Code review comment density
+- 📉 **Debt Score** - Overall technical debt indicator
+- 💡 **Recommendations** - Actionable improvement suggestions
+
+#### 3. Bottleneck Analysis (Анализ узких мест)
+- 🔍 **Stage Identification** - Which stage is slowest (todo, dev, review, testing)
+- ⏰ **Time Tracking** - Average time in each stage
+- 📊 **Impact Assessment** - How severe is the bottleneck
+- 🎯 **Recommendations** - Specific suggestions to improve workflow
 
 ## 📖 API Documentation
 
 После запуска backend сервера, документация API доступна по адресам:
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
+
+### Основные эндпоинты / Main Endpoints
+
+#### Projects (T1 Сфера.Код Projects)
+- `GET /api/v1/projects` - List all projects
+- `POST /api/v1/projects` - Create project
+- `POST /api/v1/projects/{id}/generate-mock-data` - Generate mock T1 data
+
+#### Teams
+- `GET /api/v1/teams` - List teams
+- `POST /api/v1/teams` - Create team
+- `POST /api/v1/teams/members` - Add team member
+
+#### Metrics & Analysis
+- `GET /api/v1/metrics/team/{id}/effectiveness` - Team effectiveness score
+- `GET /api/v1/metrics/team/{id}/technical-debt` - Technical debt analysis
+- `GET /api/v1/metrics/team/{id}/bottlenecks` - Bottleneck analysis
+- `GET /api/v1/metrics/project/{id}/technical-debt` - Project technical debt
 
 ## 🧪 Тестирование / Testing
 

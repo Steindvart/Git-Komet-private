@@ -2,129 +2,100 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.db.session import get_db
-from app.models.models import Repository as RepositoryModel
-from app.schemas.schemas import Repository, RepositoryCreate, RepositoryUpdate
-from app.services.git_service import GitService
-import os
-import tempfile
+from app.models.models import Project as ProjectModel
+from app.schemas.schemas import Project, ProjectCreate
+from app.services.t1_mock_service import T1MockDataService
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Repository])
-def list_repositories(
+@router.get("/", response_model=List[Project])
+def list_projects(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db)
 ):
-    """List all repositories."""
-    repositories = db.query(RepositoryModel).offset(skip).limit(limit).all()
-    return repositories
+    """List all projects from T1 Сфера.Код."""
+    projects = db.query(ProjectModel).offset(skip).limit(limit).all()
+    return projects
 
 
-@router.post("/", response_model=Repository)
-def create_repository(
-    repository: RepositoryCreate,
+@router.post("/", response_model=Project)
+def create_project(
+    project: ProjectCreate,
     db: Session = Depends(get_db)
 ):
-    """Create a new repository."""
-    # Check if repository already exists
-    existing = db.query(RepositoryModel).filter(
-        RepositoryModel.url == repository.url
+    """Create a new project (from T1 Сфера.Код API)."""
+    # Check if project already exists
+    existing = db.query(ProjectModel).filter(
+        ProjectModel.external_id == project.external_id
     ).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Repository already exists")
+        raise HTTPException(status_code=400, detail="Project already exists")
     
-    db_repository = RepositoryModel(**repository.dict())
-    db.add(db_repository)
+    db_project = ProjectModel(**project.dict())
+    db.add(db_project)
     db.commit()
-    db.refresh(db_repository)
-    return db_repository
+    db.refresh(db_project)
+    return db_project
 
 
-@router.get("/{repository_id}", response_model=Repository)
-def get_repository(
-    repository_id: int,
+@router.get("/{project_id}", response_model=Project)
+def get_project(
+    project_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get a specific repository."""
-    repository = db.query(RepositoryModel).filter(
-        RepositoryModel.id == repository_id
+    """Get a specific project."""
+    project = db.query(ProjectModel).filter(
+        ProjectModel.id == project_id
     ).first()
-    if not repository:
-        raise HTTPException(status_code=404, detail="Repository not found")
-    return repository
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
 
 
-@router.put("/{repository_id}", response_model=Repository)
-def update_repository(
-    repository_id: int,
-    repository: RepositoryUpdate,
+@router.delete("/{project_id}")
+def delete_project(
+    project_id: int,
     db: Session = Depends(get_db)
 ):
-    """Update a repository."""
-    db_repository = db.query(RepositoryModel).filter(
-        RepositoryModel.id == repository_id
+    """Delete a project."""
+    project = db.query(ProjectModel).filter(
+        ProjectModel.id == project_id
     ).first()
-    if not db_repository:
-        raise HTTPException(status_code=404, detail="Repository not found")
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
     
-    update_data = repository.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(db_repository, field, value)
-    
+    db.delete(project)
     db.commit()
-    db.refresh(db_repository)
-    return db_repository
+    return {"message": "Project deleted successfully"}
 
 
-@router.delete("/{repository_id}")
-def delete_repository(
-    repository_id: int,
+@router.post("/{project_id}/generate-mock-data")
+def generate_mock_data(
+    project_id: int,
+    team_id: int,
     db: Session = Depends(get_db)
 ):
-    """Delete a repository."""
-    repository = db.query(RepositoryModel).filter(
-        RepositoryModel.id == repository_id
-    ).first()
-    if not repository:
-        raise HTTPException(status_code=404, detail="Repository not found")
+    """
+    Generate mock data for a project as if from T1 Сфера.Код API.
     
-    db.delete(repository)
-    db.commit()
-    return {"message": "Repository deleted successfully"}
-
-
-@router.post("/{repository_id}/sync")
-def sync_repository(
-    repository_id: int,
-    db: Session = Depends(get_db)
-):
-    """Sync repository commits from Git."""
-    repository = db.query(RepositoryModel).filter(
-        RepositoryModel.id == repository_id
+    This simulates receiving:
+    - Commits with test coverage and TODO tracking
+    - Pull requests with review times
+    - Code reviews with comment counts
+    - Tasks with stage timing for bottleneck analysis
+    
+    In production, this would be replaced with actual T1 API integration.
+    """
+    project = db.query(ProjectModel).filter(
+        ProjectModel.id == project_id
     ).first()
-    if not repository:
-        raise HTTPException(status_code=404, detail="Repository not found")
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
     
     try:
-        # Create temporary directory for cloning
-        with tempfile.TemporaryDirectory() as temp_dir:
-            local_path = os.path.join(temp_dir, "repo")
-            
-            # Clone or open repository
-            git_repo = GitService.clone_or_open_repository(repository.url, local_path)
-            
-            # Extract commits
-            commits_data = GitService.extract_commits(git_repo)
-            
-            # Save to database
-            saved_count = GitService.save_commits_to_db(db, repository_id, commits_data)
-        
-        return {
-            "message": "Repository synced successfully",
-            "commits_processed": len(commits_data),
-            "commits_saved": saved_count
-        }
+        result = T1MockDataService.populate_mock_data(db, team_id, project_id)
+        return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error syncing repository: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating mock data: {str(e)}")

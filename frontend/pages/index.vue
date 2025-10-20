@@ -1,24 +1,34 @@
 <template>
   <div>
     <h1>Git-Komet Dashboard</h1>
-    <p class="subtitle">Team Effectiveness Analysis Through Git Metrics</p>
+    <p class="subtitle">Team Effectiveness Analysis Through T1 Сфера.Код Metrics</p>
     
     <div class="dashboard-grid">
       <div class="card">
         <h3>📊 Overview</h3>
-        <p>Welcome to Git-Komet, a system for analyzing team effectiveness through Git metrics.</p>
+        <p>Analyze team effectiveness through T1 Сфера.Код metrics:</p>
+        <ul class="feature-list">
+          <li>✓ Team effectiveness scores (0-100)</li>
+          <li>✓ Technical debt tracking</li>
+          <li>✓ Bottleneck identification</li>
+          <li>✓ Alerts and recommendations</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>🎯 Quick Stats</h3>
         <div class="stats">
           <div class="stat-item">
-            <span class="stat-label">Repositories</span>
-            <span class="stat-value">{{ stats.repositories }}</span>
+            <span class="stat-label">Projects</span>
+            <span class="stat-value">{{ stats.projects }}</span>
           </div>
           <div class="stat-item">
             <span class="stat-label">Teams</span>
             <span class="stat-value">{{ stats.teams }}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Total Commits</span>
-            <span class="stat-value">{{ stats.commits }}</span>
+            <span class="stat-label">Avg Effectiveness</span>
+            <span class="stat-value">{{ stats.avgEffectiveness }}/100</span>
           </div>
         </div>
       </div>
@@ -27,36 +37,76 @@
         <h3>🚀 Quick Actions</h3>
         <div class="actions">
           <NuxtLink to="/repositories" class="btn btn-primary">
-            Manage Repositories
+            Manage Projects
           </NuxtLink>
           <NuxtLink to="/teams" class="btn btn-secondary">
             Manage Teams
           </NuxtLink>
           <NuxtLink to="/metrics" class="btn btn-secondary">
-            View Metrics
+            View Analytics
           </NuxtLink>
         </div>
       </div>
 
       <div class="card">
-        <h3>📈 Recent Activity</h3>
-        <p>Track recent commits and team activities across all repositories.</p>
-        <ul class="activity-list">
-          <li>System ready for data collection</li>
-          <li>Configure repositories to start analysis</li>
-          <li>Add teams and team members</li>
-        </ul>
+        <h3>🔍 Analysis Types</h3>
+        <div class="analysis-types">
+          <div class="analysis-item">
+            <span class="analysis-icon">📊</span>
+            <div class="analysis-info">
+              <strong>Team Effectiveness</strong>
+              <p>Overall performance score with trends and alerts</p>
+            </div>
+          </div>
+          <div class="analysis-item">
+            <span class="analysis-icon">🔧</span>
+            <div class="analysis-info">
+              <strong>Technical Debt</strong>
+              <p>Test coverage, TODO growth, review quality</p>
+            </div>
+          </div>
+          <div class="analysis-item">
+            <span class="analysis-icon">🚧</span>
+            <div class="analysis-info">
+              <strong>Bottlenecks</strong>
+              <p>Identify workflow slowdowns and get recommendations</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
-        <h3>ℹ️ Features</h3>
-        <ul class="feature-list">
-          <li>✓ Git repository analysis</li>
-          <li>✓ Team effectiveness metrics</li>
-          <li>✓ Commit frequency tracking</li>
-          <li>✓ Code churn analysis</li>
-          <li>✓ Contributor statistics</li>
-        </ul>
+      <div class="card full-width">
+        <h3>💡 Getting Started</h3>
+        <div class="getting-started">
+          <div class="step">
+            <span class="step-number">1</span>
+            <div class="step-content">
+              <strong>Add a Project</strong>
+              <p>Create a project from T1 Сфера.Код</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-number">2</span>
+            <div class="step-content">
+              <strong>Create a Team</strong>
+              <p>Set up your development team and add members</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-number">3</span>
+            <div class="step-content">
+              <strong>Generate Mock Data</strong>
+              <p>Simulate T1 API data (commits, PRs, reviews, tasks)</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-number">4</span>
+            <div class="step-content">
+              <strong>View Analytics</strong>
+              <p>Explore metrics, trends, and recommendations</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -64,9 +114,9 @@
 
 <script setup lang="ts">
 const stats = ref({
-  repositories: 0,
+  projects: 0,
   teams: 0,
-  commits: 0
+  avgEffectiveness: 0
 })
 
 onMounted(async () => {
@@ -87,6 +137,10 @@ onMounted(async () => {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
+}
+
+.full-width {
+  grid-column: 1 / -1;
 }
 
 .stats {
@@ -120,21 +174,85 @@ onMounted(async () => {
   margin-top: 1rem;
 }
 
-.activity-list,
 .feature-list {
   list-style: none;
   padding: 0;
   margin-top: 1rem;
 }
 
-.activity-list li,
 .feature-list li {
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border-color);
+  color: #4b5563;
 }
 
-.activity-list li:last-child,
-.feature-list li:last-child {
-  border-bottom: none;
+.analysis-types {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.analysis-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+.analysis-icon {
+  font-size: 2rem;
+}
+
+.analysis-info strong {
+  display: block;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.analysis-info p {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.getting-started {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.step {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+.step-number {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.step-content strong {
+  display: block;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.step-content p {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
 }
 </style>

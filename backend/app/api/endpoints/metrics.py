@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional
 from datetime import datetime, timedelta
 from app.db.session import get_db
-from app.schemas.schemas import TeamEffectivenessMetrics, RepositoryMetrics
-from app.services.metrics_service import MetricsService
+from app.schemas.schemas import (
+    TeamEffectivenessMetrics,
+    TechnicalDebtAnalysis,
+    BottleneckAnalysis
+)
+from app.services.team_effectiveness_service import TeamEffectivenessService
+from app.services.technical_debt_service import TechnicalDebtService
+from app.services.bottleneck_service import BottleneckService
 
 router = APIRouter()
 
@@ -15,69 +20,127 @@ def get_team_effectiveness(
     period_days: int = Query(default=30, ge=1, le=365),
     db: Session = Depends(get_db)
 ):
-    """Get team effectiveness metrics for a specific period."""
+    """
+    Get comprehensive team effectiveness metrics including:
+    - Overall effectiveness score (0-100)
+    - Activity metrics (commits, PRs, active contributors)
+    - Performance indicators
+    - Alerts and recommendations
+    """
     period_end = datetime.utcnow()
     period_start = period_end - timedelta(days=period_days)
     
-    metrics = MetricsService.calculate_team_effectiveness(
+    metrics = TeamEffectivenessService.calculate_effectiveness_score(
         db, team_id, period_start, period_end
     )
     
     if not metrics:
         raise HTTPException(status_code=404, detail="Team not found")
     
-    return metrics
-
-
-@router.get("/repository/{repository_id}", response_model=RepositoryMetrics)
-def get_repository_metrics(
-    repository_id: int,
-    period_days: int = Query(default=30, ge=1, le=365),
-    db: Session = Depends(get_db)
-):
-    """Get repository metrics for a specific period."""
-    period_end = datetime.utcnow()
-    period_start = period_end - timedelta(days=period_days)
-    
-    metrics = MetricsService.calculate_repository_metrics(
-        db, repository_id, period_start, period_end
-    )
-    
-    if not metrics:
-        raise HTTPException(status_code=404, detail="Repository not found")
-    
-    return metrics
-
-
-@router.post("/repository/{repository_id}/calculate")
-def calculate_and_save_metrics(
-    repository_id: int,
-    period_days: int = Query(default=30, ge=1, le=365),
-    db: Session = Depends(get_db)
-):
-    """Calculate and save repository metrics."""
-    period_end = datetime.utcnow()
-    period_start = period_end - timedelta(days=period_days)
-    
-    metrics = MetricsService.calculate_repository_metrics(
-        db, repository_id, period_start, period_end
-    )
-    
-    if not metrics:
-        raise HTTPException(status_code=404, detail="Repository not found")
-    
     # Save metric to database
-    saved_metric = MetricsService.save_metric(
+    TeamEffectivenessService.save_team_metric(
         db=db,
-        repository_id=repository_id,
-        metric_type="repository_metrics",
-        metric_value=metrics,
+        team_id=team_id,
+        metric_type="effectiveness_score",
+        metric_data=metrics,
+        score=metrics["effectiveness_score"],
+        trend=metrics["trend"],
+        period_start=period_start,
+        period_end=period_end,
+        has_alert=metrics["has_alert"],
+        alert_message=metrics["alert_message"],
+        alert_severity=metrics["alert_severity"]
+    )
+    
+    return metrics
+
+
+@router.get("/team/{team_id}/technical-debt", response_model=TechnicalDebtAnalysis)
+def get_technical_debt_analysis(
+    team_id: int,
+    period_days: int = Query(default=30, ge=1, le=365),
+    db: Session = Depends(get_db)
+):
+    """
+    Analyze technical debt trends including:
+    - Test coverage trends
+    - TODO comment growth
+    - Code review quality metrics
+    - Recommendations for improvement
+    """
+    period_end = datetime.utcnow()
+    period_start = period_end - timedelta(days=period_days)
+    
+    analysis = TechnicalDebtService.analyze_technical_debt(
+        db=db,
+        team_id=team_id,
         period_start=period_start,
         period_end=period_end
     )
     
-    return {
-        "message": "Metrics calculated and saved",
-        "metric_id": saved_metric.id,
-        "metrics": metrics
-    }
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    # Save metric
+    TechnicalDebtService.save_technical_debt_metric(
+        db=db,
+        team_id=team_id,
+        metrics=analysis,
+        period_start=period_start,
+        period_end=period_end
+    )
+    
+    return analysis
+
+
+@router.get("/team/{team_id}/bottlenecks", response_model=BottleneckAnalysis)
+def get_bottleneck_analysis(
+    team_id: int,
+    period_days: int = Query(default=30, ge=1, le=365),
+    db: Session = Depends(get_db)
+):
+    """
+    Analyze workflow bottlenecks including:
+    - Time spent in each stage (todo, development, review, testing)
+    - Identification of slowest stage
+    - Impact assessment
+    - Recommendations to improve workflow
+    """
+    period_end = datetime.utcnow()
+    period_start = period_end - timedelta(days=period_days)
+    
+    analysis = BottleneckService.analyze_bottlenecks(
+        db=db,
+        team_id=team_id,
+        period_start=period_start,
+        period_end=period_end
+    )
+    
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    return analysis
+
+
+@router.get("/project/{project_id}/technical-debt", response_model=TechnicalDebtAnalysis)
+def get_project_technical_debt(
+    project_id: int,
+    period_days: int = Query(default=30, ge=1, le=365),
+    db: Session = Depends(get_db)
+):
+    """Get technical debt analysis for a specific project."""
+    period_end = datetime.utcnow()
+    period_start = period_end - timedelta(days=period_days)
+    
+    analysis = TechnicalDebtService.analyze_technical_debt(
+        db=db,
+        project_id=project_id,
+        period_start=period_start,
+        period_end=period_end
+    )
+    
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    return analysis
+

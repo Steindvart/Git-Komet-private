@@ -8,9 +8,9 @@
           </NuxtLink>
           <div class="nav-links">
             <NuxtLink to="/">Dashboard</NuxtLink>
-            <NuxtLink to="/repositories">Repositories</NuxtLink>
+            <NuxtLink to="/repositories">Projects</NuxtLink>
             <NuxtLink to="/teams">Teams</NuxtLink>
-            <NuxtLink to="/metrics">Metrics</NuxtLink>
+            <NuxtLink to="/metrics">Analytics</NuxtLink>
           </div>
         </div>
       </div>
