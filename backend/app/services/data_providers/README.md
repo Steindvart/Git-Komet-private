@@ -1,86 +1,86 @@
-# Data Providers for Git-Komet
+# Поставщики данных для Git-Komet
 
-This package contains data providers that fetch Git metrics from various sources. The architecture is designed to be easily extensible, allowing you to switch between mock data and real data sources with minimal code changes.
+Этот пакет содержит поставщики данных, которые получают метрики Git из различных источников. Архитектура разработана для легкого расширения, позволяя переключаться между mock-данными и реальными источниками данных с минимальными изменениями кода.
 
-## Architecture Overview
+## Обзор архитектуры
 
-The data provider architecture uses the **Strategy Pattern**:
+Архитектура поставщиков данных использует **паттерн Стратегия**:
 
 ```
-BaseDataProvider (Abstract Interface)
-    ├── MockDataProvider (Current Implementation)
-    ├── T1DataProvider (To be implemented)
-    ├── GitHubDataProvider (To be implemented)
-    └── GitLabDataProvider (To be implemented)
+BaseDataProvider (Абстрактный интерфейс)
+    ├── MockDataProvider (Текущая реализация)
+    ├── T1DataProvider (Будет реализовано)
+    ├── GitHubDataProvider (Будет реализовано)
+    └── GitLabDataProvider (Будет реализовано)
 ```
 
-## Available Providers
+## Доступные поставщики
 
-### MockDataProvider (Default)
+### MockDataProvider (По умолчанию)
 
-Generates realistic mock data for demonstration purposes. This is the current default provider and simulates data from a Git repository system.
+Генерирует реалистичные mock-данные для целей демонстрации. Это текущий поставщик по умолчанию, который симулирует данные из системы Git-репозитория.
 
-**Use case:** Development, testing, demos, when real data sources are not available.
+**Сценарий использования:** Разработка, тестирование, демо, когда реальные источники данных недоступны.
 
-### T1DataProvider (Planned)
+### T1DataProvider (Запланировано)
 
-Will integrate with T1 Сфера.Код API to fetch real Git metrics.
+Будет интегрироваться с T1 Сфера.Код API для получения реальных метрик Git.
 
-**Status:** To be implemented when T1 API is available.
+**Статус:** Будет реализовано при доступности T1 API.
 
-### GitHubDataProvider (Planned)
+### GitHubDataProvider (Запланировано)
 
-Will integrate with GitHub API to fetch repository metrics.
+Будет интегрироваться с GitHub API для получения метрик репозитория.
 
-**Status:** Planned for future implementation.
+**Статус:** Запланировано для будущей реализации.
 
-### GitLabDataProvider (Planned)
+### GitLabDataProvider (Запланировано)
 
-Will integrate with GitLab API to fetch repository metrics.
+Будет интегрироваться с GitLab API для получения метрик репозитория.
 
-**Status:** Planned for future implementation.
+**Статус:** Запланировано для будущей реализации.
 
-## Usage
+## Использование
 
-### Using the Default Provider
+### Использование поставщика по умолчанию
 
 ```python
 from app.services.data_providers import DataProviderFactory
 
-# Create provider instance (uses 'mock' by default)
+# Создать экземпляр поставщика (по умолчанию используется 'mock')
 provider = DataProviderFactory.create()
 
-# Populate data
+# Заполнить данные
 result = provider.populate_data(db, team_id=1, project_id=1)
 ```
 
-### Switching Providers
+### Переключение поставщиков
 
 ```python
-# Option 1: Set default provider globally
-DataProviderFactory.set_default('t1')  # Once implemented
+# Вариант 1: Установить поставщика по умолчанию глобально
+DataProviderFactory.set_default('t1')  # После реализации
 
-# Option 2: Request specific provider
-provider = DataProviderFactory.create('github')  # Once implemented
+# Вариант 2: Запросить конкретного поставщика
+provider = DataProviderFactory.create('github')  # После реализации
 ```
 
-### Available Provider Methods
+### Доступные методы поставщика
 
-All providers implement the following methods:
+Все поставщики реализуют следующие методы:
 
-- `fetch_commits(db, team_id, project_id, period_start, period_end)` - Fetch commit data
-- `fetch_pull_requests(db, team_id, project_id, period_start, period_end)` - Fetch PR data
-- `fetch_code_reviews(db, pull_request_ids, team_id)` - Fetch review data
-- `fetch_tasks(db, team_id, project_id, period_start, period_end)` - Fetch task/issue data
-- `populate_data(db, team_id, project_id, period_start, period_end)` - High-level method to fetch and store all data
+- `fetch_commits(db, team_id, project_id, period_start, period_end)` - Получить данные коммитов
+- `fetch_pull_requests(db, team_id, project_id, period_start, period_end)` - Получить данные PR
+- `fetch_code_reviews(db, pull_request_ids, team_id)` - Получить данные ревью
+- `fetch_tasks(db, team_id, project_id, period_start, period_end)` - Получить данные задач/issues
+- `populate_data(db, team_id, project_id, period_start, period_end)` - Высокоуровневый метод для получения и сохранения всех данных
 
-## Implementing a New Provider
+## Реализация нового поставщика
 
-To add a new data provider (e.g., for T1 Сфера.Код):
+Для добавления нового поставщика данных (например, для T1 Сфера.Код):
 
-### 1. Create the Provider Class
+### 1. Создать класс поставщика
 
-Create a new file `t1_provider.py` in this directory:
+Создайте новый файл `t1_provider.py` в этом каталоге:
 
 ```python
 from typing import List, Dict, Optional
@@ -89,46 +89,46 @@ from sqlalchemy.orm import Session
 from .base_provider import BaseDataProvider
 
 class T1DataProvider(BaseDataProvider):
-    """Data provider for T1 Сфера.Код API."""
+    """Поставщик данных для T1 Сфера.Код API."""
     
     def __init__(self, api_key: str, api_url: str):
-        """Initialize with T1 API credentials."""
+        """Инициализация с учетными данными T1 API."""
         self.api_key = api_key
         self.api_url = api_url
-        # Initialize T1 API client
+        # Инициализировать клиент T1 API
         # self.client = T1ApiClient(api_key, api_url)
     
     def fetch_commits(self, db, team_id, project_id, period_start, period_end) -> List[Dict]:
-        """Fetch real commits from T1 API."""
-        # Call T1 API
+        """Получить реальные коммиты из T1 API."""
+        # Вызвать T1 API
         # commits = self.client.get_commits(project_id, period_start, period_end)
         
-        # Transform T1 response to our format
+        # Преобразовать ответ T1 в наш формат
         # return [self._transform_commit(c) for c in commits]
         pass
     
     def fetch_pull_requests(self, db, team_id, project_id, period_start, period_end) -> List[Dict]:
-        """Fetch real PRs from T1 API."""
+        """Получить реальные PR из T1 API."""
         pass
     
     def fetch_code_reviews(self, db, pull_request_ids, team_id) -> List[Dict]:
-        """Fetch real reviews from T1 API."""
+        """Получить реальные ревью из T1 API."""
         pass
     
     def fetch_tasks(self, db, team_id, project_id, period_start, period_end) -> List[Dict]:
-        """Fetch real tasks from T1 API."""
+        """Получить реальные задачи из T1 API."""
         pass
     
     def populate_data(self, db, team_id, project_id, period_start=None, period_end=None) -> Dict:
-        """Populate database with real data from T1."""
-        # Implement similar to MockDataProvider.populate_data()
-        # but using real API calls instead of generating mock data
+        """Заполнить базу данных реальными данными из T1."""
+        # Реализовать аналогично MockDataProvider.populate_data()
+        # но используя реальные вызовы API вместо генерации mock-данных
         pass
 ```
 
-### 2. Register the Provider
+### 2. Зарегистрировать поставщика
 
-Update `__init__.py`:
+Обновите `__init__.py`:
 
 ```python
 from .t1_provider import T1DataProvider
@@ -136,7 +136,7 @@ from .t1_provider import T1DataProvider
 __all__ = [..., 'T1DataProvider']
 ```
 
-Update `provider_factory.py`:
+Обновите `provider_factory.py`:
 
 ```python
 from .t1_provider import T1DataProvider
@@ -144,36 +144,36 @@ from .t1_provider import T1DataProvider
 class DataProviderFactory:
     _providers = {
         'mock': MockDataProvider,
-        't1': T1DataProvider,  # Add here
+        't1': T1DataProvider,  # Добавить здесь
         # ...
     }
 ```
 
-### 3. Configure and Use
+### 3. Настройка и использование
 
 ```python
-# In your configuration or environment
+# В вашей конфигурации или окружении
 from app.services.data_providers import DataProviderFactory, T1DataProvider
 
-# Register with configuration
+# Зарегистрировать с конфигурацией
 DataProviderFactory.register_provider('t1', T1DataProvider)
 
-# Set as default
+# Установить по умолчанию
 DataProviderFactory.set_default('t1')
 
-# Or use directly
+# Или использовать напрямую
 provider = DataProviderFactory.create('t1')
 result = provider.populate_data(db, team_id=1, project_id=1)
 ```
 
-## Data Format Requirements
+## Требования к формату данных
 
-All providers must return data in the following formats (see `base_provider.py` for detailed documentation):
+Все поставщики должны возвращать данные в следующих форматах (см. `base_provider.py` для подробной документации):
 
-### Commits
+### Коммиты
 ```python
 {
-    'external_id': str,          # Commit SHA
+    'external_id': str,          # SHA коммита
     'author_email': str,
     'author_name': str,
     'message': str,
@@ -203,8 +203,8 @@ All providers must return data in the following formats (see `base_provider.py` 
     'created_at': datetime,
     'updated_at': datetime,
     'merged_at': datetime,
-    'time_to_first_review': float,  # hours
-    'time_to_merge': float,     # hours
+    'time_to_first_review': float,  # часы
+    'time_to_merge': float,     # часы
     'review_cycles': int,
     'lines_added': int,
     'lines_deleted': int,
@@ -225,7 +225,7 @@ All providers must return data in the following formats (see `base_provider.py` 
 }
 ```
 
-### Tasks
+### Задачи
 ```python
 {
     'external_id': str,
@@ -238,25 +238,25 @@ All providers must return data in the following formats (see `base_provider.py` 
     'created_at': datetime,
     'started_at': datetime,
     'completed_at': datetime,
-    'time_in_todo': float,      # hours
-    'time_in_development': float,  # hours
-    'time_in_review': float,    # hours
-    'time_in_testing': float    # hours
+    'time_in_todo': float,      # часы
+    'time_in_development': float,  # часы
+    'time_in_review': float,    # часы
+    'time_in_testing': float    # часы
 }
 ```
 
-## Configuration
+## Конфигурация
 
-You can configure the default provider through environment variables:
+Вы можете настроить поставщика по умолчанию через переменные окружения:
 
 ```bash
-# .env file
-DATA_PROVIDER=mock  # Options: mock, t1, github, gitlab
-T1_API_KEY=your_api_key_here
+# Файл .env
+DATA_PROVIDER=mock  # Варианты: mock, t1, github, gitlab
+T1_API_KEY=ваш_api_ключ
 T1_API_URL=https://api.t1-sphere.com
 ```
 
-Then in your configuration:
+Затем в вашей конфигурации:
 
 ```python
 # app/core/config.py
@@ -266,9 +266,9 @@ class Settings(BaseSettings):
     T1_API_URL: Optional[str] = None
 ```
 
-## Testing
+## Тестирование
 
-Each provider should include tests:
+Каждый поставщик должен включать тесты:
 
 ```python
 # tests/test_data_providers.py
@@ -281,16 +281,16 @@ def test_t1_provider():
     assert isinstance(provider, T1DataProvider)
 ```
 
-## Benefits of This Architecture
+## Преимущества этой архитектуры
 
-1. **Easy to switch providers**: Change one line of code or configuration
-2. **Testable**: Mock provider for testing, real provider for production
-3. **Extensible**: Add new providers without changing existing code
-4. **Type-safe**: All providers implement the same interface
-5. **Maintainable**: Clear separation of concerns
+1. **Легко переключать поставщиков**: Изменить одну строку кода или конфигурацию
+2. **Тестируемость**: Mock-поставщик для тестирования, реальный поставщик для продакшена
+3. **Расширяемость**: Добавлять новых поставщиков без изменения существующего кода
+4. **Типобезопасность**: Все поставщики реализуют один интерфейс
+5. **Поддерживаемость**: Четкое разделение ответственности
 
-## Migration Path
+## Путь миграции
 
-Current: `MockDataProvider` → Future: `T1DataProvider` or any other provider
+Текущее: `MockDataProvider` → Будущее: `T1DataProvider` или любой другой поставщик
 
-The migration is seamless - just implement the new provider following the interface, register it, and switch the configuration. No changes needed to consuming code.
+Миграция бесшовная - просто реализуйте нового поставщика следуя интерфейсу, зарегистрируйте его и переключите конфигурацию. Никаких изменений не требуется в коде потребителя.
