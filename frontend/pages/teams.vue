@@ -3,13 +3,22 @@
     <h1>Команды</h1>
     <p class="subtitle">Управление командами разработки</p>
 
+    <div v-if="error" class="error-message">
+      {{ error }}
+      <button @click="error = null" class="close-btn">×</button>
+    </div>
+
     <div class="actions-bar">
-      <button class="btn btn-primary" @click="showAddModal = true">
+      <button class="btn btn-primary" @click="showAddModal = true" :disabled="loading">
         + Добавить команду
       </button>
     </div>
 
-    <div class="teams-list">
+    <div v-if="loading && teams.length === 0" class="loading-state">
+      Загрузка...
+    </div>
+
+    <div v-else class="teams-list">
       <div v-if="teams.length === 0" class="empty-state">
         <p>Пока нет команд. Создайте первую команду для отслеживания эффективности!</p>
       </div>
@@ -25,7 +34,7 @@
             <NuxtLink :to="`/teams/${team.id}`" class="btn btn-secondary">
               Просмотр деталей
             </NuxtLink>
-            <button class="btn" @click="deleteTeam(team.id)">
+            <button class="btn" @click="deleteTeam(team.id)" :disabled="loading">
               Удалить
             </button>
           </div>
@@ -40,15 +49,17 @@
         <form @submit.prevent="addTeam">
           <div class="form-group">
             <label>Название команды</label>
-            <input v-model="newTeam.name" type="text" required />
+            <input v-model="newTeam.name" type="text" required :disabled="loading" />
           </div>
           <div class="form-group">
             <label>Описание</label>
-            <textarea v-model="newTeam.description"></textarea>
+            <textarea v-model="newTeam.description" :disabled="loading"></textarea>
           </div>
           <div class="modal-actions">
-            <button type="submit" class="btn btn-primary">Добавить</button>
-            <button type="button" class="btn" @click="showAddModal = false">Отмена</button>
+            <button type="submit" class="btn btn-primary" :disabled="loading">
+              {{ loading ? 'Добавление...' : 'Добавить' }}
+            </button>
+            <button type="button" class="btn" @click="showAddModal = false" :disabled="loading">Отмена</button>
           </div>
         </form>
       </div>
@@ -57,21 +68,62 @@
 </template>
 
 <script setup lang="ts">
+const api = useApi()
 const showAddModal = ref(false)
 const teams = ref([])
+const loading = ref(false)
+const error = ref<string | null>(null)
 const newTeam = ref({
   name: '',
   description: ''
 })
 
+// Load teams on mount
+onMounted(async () => {
+  await loadTeams()
+})
+
+const loadTeams = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    teams.value = await api.fetchTeams()
+  } catch (e: any) {
+    error.value = 'Не удалось загрузить команды: ' + e.message
+  } finally {
+    loading.value = false
+  }
+}
+
 const addTeam = async () => {
-  console.log('Добавление команды:', newTeam.value)
-  showAddModal.value = false
-  newTeam.value = { name: '', description: '' }
+  loading.value = true
+  error.value = null
+  try {
+    await api.createTeam(newTeam.value)
+    showAddModal.value = false
+    newTeam.value = { name: '', description: '' }
+    await loadTeams()
+  } catch (e: any) {
+    error.value = 'Не удалось создать команду: ' + e.message
+  } finally {
+    loading.value = false
+  }
 }
 
 const deleteTeam = async (id: number) => {
-  console.log('Удаление команды:', id)
+  const confirmed = confirm('Вы уверены, что хотите удалить эту команду?')
+  if (!confirmed) return
+  
+  loading.value = true
+  error.value = null
+  try {
+    await api.deleteTeam(id)
+    await loadTeams()
+  } catch (e: any) {
+    error.value = 'Не удалось удалить команду: ' + e.message
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -79,6 +131,36 @@ const deleteTeam = async (id: number) => {
 .subtitle {
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
+}
+
+.error-message {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message .close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #c33;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
 }
 
 .actions-bar {
@@ -162,6 +244,12 @@ const deleteTeam = async (id: number) => {
   border-color: var(--accent-primary);
 }
 
+.form-group input:disabled,
+.form-group textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .form-group textarea {
   min-height: 100px;
   resize: vertical;
@@ -171,5 +259,10 @@ const deleteTeam = async (id: number) => {
   display: flex;
   gap: 0.5rem;
   margin-top: 1.5rem;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
