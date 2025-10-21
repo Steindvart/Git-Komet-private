@@ -4,7 +4,7 @@
       <div class="container">
         <div class="nav-content">
           <NuxtLink to="/" class="logo">
-            <h2>Git-Komet</h2>
+            <h2>☄️Git-Komet</h2>
           </NuxtLink>
           <div class="nav-links">
             <NuxtLink to="/">Главная</NuxtLink>
