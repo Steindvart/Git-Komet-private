@@ -1,8 +1,8 @@
 """
-Base data provider interface.
+Базовый интерфейс поставщика данных.
 
-This defines the contract that all data providers must implement,
-making it easy to swap between mock and real data sources.
+Определяет контракт, который должны реализовывать все поставщики данных,
+что упрощает переключение между mock и реальными источниками данных.
 """
 
 from abc import ABC, abstractmethod
@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 
 class BaseDataProvider(ABC):
-    """Base interface for all data providers."""
+    """Базовый интерфейс для всех поставщиков данных."""
     
     @abstractmethod
     def fetch_commits(
@@ -24,10 +24,10 @@ class BaseDataProvider(ABC):
         period_end: datetime
     ) -> List[Dict]:
         """
-        Fetch commit data from the data source.
+        Получить данные о коммитах из источника данных.
         
-        Returns a list of commit dictionaries with the following structure:
-        - external_id: str (commit SHA)
+        Возвращает список словарей коммитов со следующей структурой:
+        - external_id: str (SHA коммита)
         - author_email: str
         - author_name: str
         - message: str
@@ -36,10 +36,10 @@ class BaseDataProvider(ABC):
         - insertions: int
         - deletions: int
         - has_tests: bool
-        - test_coverage_delta: float (optional)
+        - test_coverage_delta: float (опционально)
         - todo_count: int
         - is_churn: bool
-        - churn_days: int (optional)
+        - churn_days: int (опционально)
         - is_after_hours: bool
         - is_weekend: bool
         """
@@ -55,20 +55,20 @@ class BaseDataProvider(ABC):
         period_end: datetime
     ) -> List[Dict]:
         """
-        Fetch pull request data from the data source.
+        Получить данные о pull request из источника данных.
         
-        Returns a list of PR dictionaries with the following structure:
+        Возвращает список словарей PR со следующей структурой:
         - external_id: str
         - project_id: int
         - author_email: str
         - title: str
-        - description: str (optional)
+        - description: str (опционально)
         - state: str (open, merged, closed)
         - created_at: datetime
         - updated_at: datetime
-        - merged_at: datetime (optional)
-        - time_to_first_review: float (hours, optional)
-        - time_to_merge: float (hours, optional)
+        - merged_at: datetime (опционально)
+        - time_to_first_review: float (часы, опционально)
+        - time_to_merge: float (часы, опционально)
         - review_cycles: int
         - lines_added: int
         - lines_deleted: int
@@ -84,9 +84,9 @@ class BaseDataProvider(ABC):
         team_id: int
     ) -> List[Dict]:
         """
-        Fetch code review data from the data source.
+        Получить данные о code review из источника данных.
         
-        Returns a list of review dictionaries with the following structure:
+        Возвращает список словарей ревью со следующей структурой:
         - pull_request_id: int
         - reviewer_email: str
         - state: str (approved, changes_requested, commented)
@@ -107,23 +107,23 @@ class BaseDataProvider(ABC):
         period_end: datetime
     ) -> List[Dict]:
         """
-        Fetch task/issue data from the data source.
+        Получить данные о задачах/issues из источника данных.
         
-        Returns a list of task dictionaries with the following structure:
+        Возвращает список словарей задач со следующей структурой:
         - external_id: str
         - project_id: int
         - assignee_email: str
         - title: str
-        - description: str (optional)
+        - description: str (опционально)
         - state: str (todo, in_progress, in_review, done)
         - priority: str (low, medium, high, critical)
         - created_at: datetime
-        - started_at: datetime (optional)
-        - completed_at: datetime (optional)
-        - time_in_todo: float (hours, optional)
-        - time_in_development: float (hours, optional)
-        - time_in_review: float (hours, optional)
-        - time_in_testing: float (hours, optional)
+        - started_at: datetime (опционально)
+        - completed_at: datetime (опционально)
+        - time_in_todo: float (часы, опционально)
+        - time_in_development: float (часы, опционально)
+        - time_in_review: float (часы, опционально)
+        - time_in_testing: float (часы, опционально)
         """
         pass
     
@@ -137,12 +137,12 @@ class BaseDataProvider(ABC):
         period_end: Optional[datetime] = None
     ) -> Dict:
         """
-        Populate database with data from the source.
+        Заполнить базу данных данными из источника.
         
-        This is a high-level method that orchestrates fetching and storing
-        all types of data (commits, PRs, reviews, tasks).
+        Это высокоуровневый метод, который координирует получение и сохранение
+        всех типов данных (коммиты, PR, ревью, задачи).
         
-        Returns a dictionary with counts of created records:
+        Возвращает словарь с количеством созданных записей:
         - commits_created: int
         - pull_requests_created: int
         - reviews_created: int

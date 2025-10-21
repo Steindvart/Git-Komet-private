@@ -1,7 +1,7 @@
 """
-Data provider factory for Git-Komet.
+Фабрика поставщиков данных для Git-Komet.
 
-This factory allows easy configuration and switching between different data providers.
+Эта фабрика позволяет легко настраивать и переключаться между различными поставщиками данных.
 """
 
 from typing import Optional
@@ -11,47 +11,47 @@ from .mock_provider import MockDataProvider
 
 class DataProviderFactory:
     """
-    Factory for creating data provider instances.
+    Фабрика для создания экземпляров поставщиков данных.
     
-    This makes it easy to switch between mock and real data providers
-    through configuration.
+    Упрощает переключение между mock и реальными поставщиками данных
+    через конфигурацию.
     """
     
-    # Registry of available providers
+    # Реестр доступных поставщиков
     _providers = {
         'mock': MockDataProvider,
-        # Future providers can be registered here:
+        # Будущие поставщики могут быть зарегистрированы здесь:
         # 't1': T1DataProvider,
         # 'github': GitHubDataProvider,
         # 'gitlab': GitLabDataProvider,
     }
     
-    # Default provider type
+    # Тип поставщика по умолчанию
     _default_provider = 'mock'
     
     @classmethod
     def create(cls, provider_type: Optional[str] = None) -> BaseDataProvider:
         """
-        Create and return a data provider instance.
+        Создать и вернуть экземпляр поставщика данных.
         
         Args:
-            provider_type: Type of provider to create ('mock', 't1', 'github', 'gitlab')
-                          If None, uses the default provider.
+            provider_type: Тип создаваемого поставщика ('mock', 't1', 'github', 'gitlab')
+                          Если None, использует поставщика по умолчанию.
         
         Returns:
-            An instance of the requested data provider.
+            Экземпляр запрошенного поставщика данных.
         
         Raises:
-            ValueError: If the provider type is not recognized.
+            ValueError: Если тип поставщика не распознан.
         
-        Example:
-            # Get the default (mock) provider
+        Пример:
+            # Получить поставщика по умолчанию (mock)
             provider = DataProviderFactory.create()
             
-            # Get a specific provider
+            # Получить конкретного поставщика
             provider = DataProviderFactory.create('mock')
             
-            # In the future, when real providers are implemented:
+            # В будущем, когда реальные поставщики будут реализованы:
             provider = DataProviderFactory.create('t1')
         """
         provider_type = provider_type or cls._default_provider
@@ -59,8 +59,8 @@ class DataProviderFactory:
         if provider_type not in cls._providers:
             available = ', '.join(cls._providers.keys())
             raise ValueError(
-                f"Unknown provider type: {provider_type}. "
-                f"Available providers: {available}"
+                f"Неизвестный тип поставщика: {provider_type}. "
+                f"Доступные поставщики: {available}"
             )
         
         provider_class = cls._providers[provider_type]
@@ -69,19 +69,19 @@ class DataProviderFactory:
     @classmethod
     def set_default(cls, provider_type: str) -> None:
         """
-        Set the default provider type.
+        Установить тип поставщика по умолчанию.
         
         Args:
-            provider_type: Type of provider to use as default.
+            provider_type: Тип поставщика для использования по умолчанию.
         
         Raises:
-            ValueError: If the provider type is not recognized.
+            ValueError: Если тип поставщика не распознан.
         """
         if provider_type not in cls._providers:
             available = ', '.join(cls._providers.keys())
             raise ValueError(
-                f"Unknown provider type: {provider_type}. "
-                f"Available providers: {available}"
+                f"Неизвестный тип поставщика: {provider_type}. "
+                f"Доступные поставщики: {available}"
             )
         
         cls._default_provider = provider_type
@@ -89,16 +89,16 @@ class DataProviderFactory:
     @classmethod
     def register_provider(cls, name: str, provider_class: type) -> None:
         """
-        Register a new data provider.
+        Зарегистрировать нового поставщика данных.
         
-        This allows plugins or extensions to add new provider types.
+        Это позволяет плагинам или расширениям добавлять новые типы поставщиков.
         
         Args:
-            name: Name to register the provider under.
-            provider_class: The provider class to register.
+            name: Имя для регистрации поставщика.
+            provider_class: Класс поставщика для регистрации.
         
-        Example:
-            # Register a custom provider
+        Пример:
+            # Зарегистрировать пользовательского поставщика
             class CustomProvider(BaseDataProvider):
                 ...
             
@@ -107,7 +107,7 @@ class DataProviderFactory:
         """
         if not issubclass(provider_class, BaseDataProvider):
             raise ValueError(
-                f"Provider class must inherit from BaseDataProvider"
+                f"Класс поставщика должен наследоваться от BaseDataProvider"
             )
         
         cls._providers[name] = provider_class
@@ -115,9 +115,9 @@ class DataProviderFactory:
     @classmethod
     def get_available_providers(cls) -> list:
         """
-        Get list of available provider types.
+        Получить список доступных типов поставщиков.
         
         Returns:
-            List of provider type names.
+            Список имен типов поставщиков.
         """
         return list(cls._providers.keys())

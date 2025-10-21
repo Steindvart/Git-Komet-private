@@ -78,23 +78,23 @@ def generate_mock_data(
     db: Session = Depends(get_db)
 ):
     """
-    Generate data for a project using the configured data provider.
+    Сгенерировать данные для проекта, используя настроенного поставщика данных.
     
-    Currently uses the mock data provider for demonstration purposes.
-    This simulates receiving:
-    - Commits with test coverage and TODO tracking
-    - Pull requests with review times
-    - Code reviews with comment counts
-    - Tasks with stage timing for bottleneck analysis
+    В настоящее время использует mock-поставщика данных для демонстрации.
+    Это симулирует получение:
+    - Коммитов с отслеживанием покрытия тестами и TODO
+    - Pull request с временем ревью
+    - Code review с количеством комментариев
+    - Задач с таймингом этапов для анализа узких мест
     
-    In production, the data provider can be easily switched to a real one
-    (e.g., T1DataProvider, GitHubDataProvider) through configuration.
+    В продакшене поставщик данных может быть легко заменен на реальный
+    (например, T1DataProvider, GitHubDataProvider) через конфигурацию.
     
-    The provider can be changed in code:
-        DataProviderFactory.set_default('t1')  # Once implemented
+    Поставщик может быть изменен в коде:
+        DataProviderFactory.set_default('t1')  # После реализации
     
-    Or a specific provider can be requested:
-        provider = DataProviderFactory.create('github')  # Once implemented
+    Или можно запросить конкретного поставщика:
+        provider = DataProviderFactory.create('github')  # После реализации
     """
     project = db.query(ProjectModel).filter(
         ProjectModel.id == project_id
@@ -103,10 +103,10 @@ def generate_mock_data(
         raise HTTPException(status_code=404, detail="Project not found")
     
     try:
-        # Get the configured data provider (currently 'mock' by default)
+        # Получить настроенного поставщика данных (по умолчанию 'mock')
         provider = DataProviderFactory.create()
         
-        # Use the provider to populate data
+        # Использовать поставщика для заполнения данных
         result = provider.populate_data(db, team_id, project_id)
         return result
     except Exception as e:

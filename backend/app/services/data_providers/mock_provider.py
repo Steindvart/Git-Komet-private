@@ -1,9 +1,9 @@
 """
-Mock data provider for demonstration purposes.
+Mock-поставщик данных для целей демонстрации.
 
-This provider generates realistic mock data to simulate a real Git repository system.
-It can be easily replaced with a real provider (T1DataProvider, GitHubDataProvider, etc.)
-when ready for production.
+Этот поставщик генерирует реалистичные mock-данные для симуляции реальной системы Git-репозитория.
+Он может быть легко заменен на реальный поставщик (T1DataProvider, GitHubDataProvider и т.д.)
+при готовности к продакшену.
 """
 
 from typing import List, Dict, Optional
@@ -20,11 +20,11 @@ from app.models.models import (
 
 class MockDataProvider(BaseDataProvider):
     """
-    Mock data provider that generates realistic test data.
+    Mock-поставщик данных, который генерирует реалистичные тестовые данные.
     
-    This simulates data from a Git repository system like T1 Сфера.Код,
-    GitHub, or GitLab. The data structure matches what would come from
-    a real API, making it easy to swap this provider with a real one.
+    Симулирует данные из системы Git-репозитория, такой как T1 Сфера.Код,
+    GitHub или GitLab. Структура данных соответствует тому, что поступало бы
+    из реального API, что упрощает замену этого поставщика на реальный.
     """
     
     def fetch_commits(
@@ -35,14 +35,14 @@ class MockDataProvider(BaseDataProvider):
         period_start: datetime,
         period_end: datetime
     ) -> List[Dict]:
-        """Generate mock commit data."""
+        """Генерировать mock-данные коммитов."""
         team = db.query(Team).filter(Team.id == team_id).first()
         if not team or not team.members:
             return []
         
         commits = []
         days_range = (period_end - period_start).days
-        count = min(50, days_range * 2)  # ~2 commits per day on average
+        count = min(50, days_range * 2)  # ~2 коммита в день в среднем
         
         for i in range(count):
             member = random.choice(team.members)
@@ -50,16 +50,16 @@ class MockDataProvider(BaseDataProvider):
                 seconds=random.randint(0, int((period_end - period_start).total_seconds()))
             )
             
-            # Simulate different commit patterns
-            has_tests = random.random() > 0.4  # 60% have tests
+            # Симуляция различных паттернов коммитов
+            has_tests = random.random() > 0.4  # 60% имеют тесты
             test_coverage_delta = random.uniform(-2, 5) if has_tests else random.uniform(-5, 0)
-            todo_count = random.choice([0, 0, 0, 1, 2, 3])  # Most commits have no TODOs
+            todo_count = random.choice([0, 0, 0, 1, 2, 3])  # В большинстве коммитов нет TODO
             
-            # Simulate code churn (20% of commits modify recently changed code)
+            # Симуляция code churn (20% коммитов изменяют недавно измененный код)
             is_churn = random.random() > 0.8
             churn_days = random.randint(1, 7) if is_churn else None
             
-            # Simulate work-life balance
+            # Симуляция work-life balance
             hour = commit_date.hour
             weekday = commit_date.weekday()
             is_after_hours = hour < 9 or hour > 18
@@ -93,14 +93,14 @@ class MockDataProvider(BaseDataProvider):
         period_start: datetime,
         period_end: datetime
     ) -> List[Dict]:
-        """Generate mock pull request data."""
+        """Генерировать mock-данные pull request."""
         team = db.query(Team).filter(Team.id == team_id).first()
         if not team or not team.members:
             return []
         
         prs = []
         days_range = (period_end - period_start).days
-        count = min(20, days_range // 2)  # ~1 PR every 2 days
+        count = min(20, days_range // 2)  # ~1 PR каждые 2 дня
         
         for i in range(count):
             member = random.choice(team.members)
@@ -108,8 +108,8 @@ class MockDataProvider(BaseDataProvider):
                 seconds=random.randint(0, int((period_end - period_start).total_seconds()))
             )
             
-            # Simulate review times
-            time_to_first_review = random.uniform(1, 72)  # 1-72 hours
+            # Симуляция времени ревью
+            time_to_first_review = random.uniform(1, 72)  # 1-72 часа
             time_to_merge = time_to_first_review + random.uniform(2, 96)
             review_cycles = random.randint(1, 4)
             
@@ -142,7 +142,7 @@ class MockDataProvider(BaseDataProvider):
         pull_request_ids: List[int],
         team_id: int
     ) -> List[Dict]:
-        """Generate mock code review data."""
+        """Генерировать mock-данные code review."""
         team = db.query(Team).filter(Team.id == team_id).first()
         if not team or not team.members:
             return []
@@ -150,7 +150,7 @@ class MockDataProvider(BaseDataProvider):
         reviews = []
         
         for pr_id in pull_request_ids:
-            # Each PR gets 1-3 reviews
+            # Каждый PR получает 1-3 ревью
             num_reviews = random.randint(1, 3)
             
             for _ in range(num_reviews):
@@ -159,7 +159,7 @@ class MockDataProvider(BaseDataProvider):
                 
                 comments_count = random.randint(0, 12)
                 critical_comments = random.randint(0, min(3, comments_count))
-                # 30% of reviews contain TODO suggestions
+                # 30% ревью содержат предложения TODO
                 todo_comments = random.randint(0, 3) if random.random() > 0.7 else 0
                 
                 reviews.append({
@@ -182,14 +182,14 @@ class MockDataProvider(BaseDataProvider):
         period_start: datetime,
         period_end: datetime
     ) -> List[Dict]:
-        """Generate mock task data with bottleneck information."""
+        """Генерировать mock-данные задач с информацией об узких местах."""
         team = db.query(Team).filter(Team.id == team_id).first()
         if not team or not team.members:
             return []
         
         tasks = []
         days_range = (period_end - period_start).days
-        count = min(30, days_range)  # ~1 task per day
+        count = min(30, days_range)  # ~1 задача в день
         
         for i in range(count):
             member = random.choice(team.members)
@@ -200,13 +200,13 @@ class MockDataProvider(BaseDataProvider):
             state = random.choice(["done", "done", "done", "in_review", "in_progress", "todo"])
             priority = random.choice(["low", "medium", "medium", "high", "critical"])
             
-            # Simulate different stage times to show bottlenecks
+            # Симуляция различного времени в разных этапах для отображения узких мест
             time_in_todo = random.uniform(1, 48)
             time_in_development = random.uniform(4, 120)
             
-            # Simulate review bottleneck - some tasks stuck in review
-            if random.random() > 0.3:  # 70% have long review times
-                time_in_review = random.uniform(24, 168)  # 1-7 days
+            # Симуляция узкого места в ревью - некоторые задачи застревают в ревью
+            if random.random() > 0.3:  # 70% имеют длительное время ревью
+                time_in_review = random.uniform(24, 168)  # 1-7 дней
             else:
                 time_in_review = random.uniform(2, 24)
             
@@ -245,25 +245,25 @@ class MockDataProvider(BaseDataProvider):
         period_end: Optional[datetime] = None
     ) -> Dict:
         """
-        Populate database with mock data for the specified period.
+        Заполнить базу данных mock-данными за указанный период.
         
-        This simulates fetching data from a real Git repository system.
+        Симулирует получение данных из реальной системы Git-репозитория.
         """
-        # Default to last 30 days if not specified
+        # По умолчанию последние 30 дней, если не указано
         if not period_end:
             period_end = datetime.utcnow()
         if not period_start:
             period_start = period_end - timedelta(days=30)
         
-        # Fetch mock data
+        # Получить mock-данные
         commits_data = self.fetch_commits(db, team_id, project_id, period_start, period_end)
         prs_data = self.fetch_pull_requests(db, team_id, project_id, period_start, period_end)
         tasks_data = self.fetch_tasks(db, team_id, project_id, period_start, period_end)
         
-        # Store commits in database
+        # Сохранить коммиты в базе данных
         commits_created = []
         for commit_data in commits_data:
-            # Find author by email
+            # Найти автора по email
             author = db.query(TeamMember).filter(
                 TeamMember.email == commit_data['author_email']
             ).first()
@@ -291,7 +291,7 @@ class MockDataProvider(BaseDataProvider):
         
         db.commit()
         
-        # Store pull requests in database
+        # Сохранить pull request в базе данных
         prs_created = []
         for pr_data in prs_data:
             author = db.query(TeamMember).filter(
@@ -320,7 +320,7 @@ class MockDataProvider(BaseDataProvider):
         
         db.commit()
         
-        # Store code reviews
+        # Сохранить code review
         pr_ids = [pr.id for pr in prs_created]
         reviews_data = self.fetch_code_reviews(db, pr_ids, team_id)
         reviews_created = []
@@ -344,7 +344,7 @@ class MockDataProvider(BaseDataProvider):
         
         db.commit()
         
-        # Store tasks
+        # Сохранить задачи
         tasks_created = []
         for task_data in tasks_data:
             assignee = db.query(TeamMember).filter(
@@ -377,5 +377,5 @@ class MockDataProvider(BaseDataProvider):
             "pull_requests_created": len(prs_created),
             "reviews_created": len(reviews_created),
             "tasks_created": len(tasks_created),
-            "message": "Mock data generated successfully"
+            "message": "Mock-данные успешно сгенерированы"
         }

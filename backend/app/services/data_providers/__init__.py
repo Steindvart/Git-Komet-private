@@ -1,11 +1,11 @@
 """
-Data providers package for Git-Komet.
+Пакет поставщиков данных для Git-Komet.
 
-This package contains different data providers that can be easily swapped:
-- MockDataProvider: Generates mock data for demonstration (current implementation)
-- T1DataProvider: Real integration with T1 Сфера.Код (to be implemented)
-- GitHubDataProvider: Integration with GitHub (to be implemented)
-- GitLabDataProvider: Integration with GitLab (to be implemented)
+Этот пакет содержит различные поставщики данных, которые можно легко заменять:
+- MockDataProvider: Генерирует mock-данные для демонстрации (текущая реализация)
+- T1DataProvider: Реальная интеграция с T1 Сфера.Код (будет реализовано)
+- GitHubDataProvider: Интеграция с GitHub (будет реализовано)
+- GitLabDataProvider: Интеграция с GitLab (будет реализовано)
 """
 
 from .base_provider import BaseDataProvider
