@@ -4,7 +4,7 @@ from typing import List
 from app.db.session import get_db
 from app.models.models import Project as ProjectModel
 from app.schemas.schemas import Project, ProjectCreate
-from app.services.t1_mock_service import T1MockDataService
+from app.services.data_providers import DataProviderFactory
 
 router = APIRouter()
 
@@ -78,15 +78,23 @@ def generate_mock_data(
     db: Session = Depends(get_db)
 ):
     """
-    Generate mock data for a project for demonstration purposes.
+    Generate data for a project using the configured data provider.
     
+    Currently uses the mock data provider for demonstration purposes.
     This simulates receiving:
     - Commits with test coverage and TODO tracking
     - Pull requests with review times
     - Code reviews with comment counts
     - Tasks with stage timing for bottleneck analysis
     
-    In production, this would be replaced with actual Git repository integration.
+    In production, the data provider can be easily switched to a real one
+    (e.g., T1DataProvider, GitHubDataProvider) through configuration.
+    
+    The provider can be changed in code:
+        DataProviderFactory.set_default('t1')  # Once implemented
+    
+    Or a specific provider can be requested:
+        provider = DataProviderFactory.create('github')  # Once implemented
     """
     project = db.query(ProjectModel).filter(
         ProjectModel.id == project_id
@@ -95,7 +103,11 @@ def generate_mock_data(
         raise HTTPException(status_code=404, detail="Project not found")
     
     try:
-        result = T1MockDataService.populate_mock_data(db, team_id, project_id)
+        # Get the configured data provider (currently 'mock' by default)
+        provider = DataProviderFactory.create()
+        
+        # Use the provider to populate data
+        result = provider.populate_data(db, team_id, project_id)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating mock data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating data: {str(e)}")
