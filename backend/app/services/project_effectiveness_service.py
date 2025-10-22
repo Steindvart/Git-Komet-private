@@ -6,7 +6,7 @@ from typing import Dict, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models.models import Project, TeamMember, Commit, PullRequest, Task, ProjectMetric
+from app.models.models import Project, ProjectMember, Commit, PullRequest, Task, ProjectMetric
 import json
 
 

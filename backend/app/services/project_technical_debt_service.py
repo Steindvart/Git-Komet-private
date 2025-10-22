@@ -5,7 +5,7 @@ Service for analyzing project technical debt.
 from typing import Dict, List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.models.models import Project, TeamMember, Commit, PullRequest, CodeReview, TechnicalDebtMetric
+from app.models.models import Project, ProjectMember, Commit, PullRequest, CodeReview, TechnicalDebtMetric
 import json
 
 

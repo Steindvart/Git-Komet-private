@@ -8,7 +8,7 @@ import random
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models.models import (
-    Project, TeamMember, Commit, PullRequest, CodeReview, Task
+    Project, ProjectMember, Commit, PullRequest, CodeReview, Task
 )
 
 
@@ -30,21 +30,21 @@ def create_demo_project_1(db: Session):
     
     # Создать участников
     members = [
-        TeamMember(
+        ProjectMember(
             project_id=project.id,
             external_id="user1",
             email="developer1@example.com",
             name="Алексей Иванов",
             role="Senior Developer"
         ),
-        TeamMember(
+        ProjectMember(
             project_id=project.id,
             external_id="user2",
             email="developer2@example.com",
             name="Мария Петрова",
             role="Middle Developer"
         ),
-        TeamMember(
+        ProjectMember(
             project_id=project.id,
             external_id="user3",
             email="developer3@example.com",
@@ -184,14 +184,14 @@ def create_demo_project_2(db: Session):
     
     # Создать участников (меньше команда)
     members = [
-        TeamMember(
+        ProjectMember(
             project_id=project.id,
             external_id="user4",
             email="developer4@example.com",
             name="Дмитрий Козлов",
             role="Tech Lead"
         ),
-        TeamMember(
+        ProjectMember(
             project_id=project.id,
             external_id="user5",
             email="developer5@example.com",
@@ -331,28 +331,28 @@ def create_demo_project_3(db: Session):
     
     # Создать участников
     members = [
-        TeamMember(
+        ProjectMember(
             project_id=project.id,
             external_id="user6",
             email="developer6@example.com",
             name="Анна Смирнова",
             role="Full Stack Developer"
         ),
-        TeamMember(
+        ProjectMember(
             project_id=project.id,
             external_id="user7",
             email="developer7@example.com",
             name="Павел Морозов",
             role="Mobile Developer"
         ),
-        TeamMember(
+        ProjectMember(
             project_id=project.id,
             external_id="user8",
             email="developer8@example.com",
             name="Ольга Кузнецова",
             role="UI/UX Developer"
         ),
-        TeamMember(
+        ProjectMember(
             project_id=project.id,
             external_id="user9",
             email="developer9@example.com",

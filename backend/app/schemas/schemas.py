@@ -23,39 +23,21 @@ class Project(ProjectBase):
         from_attributes = True
 
 
-# Team Schemas
-class TeamMemberBase(BaseModel):
+# Project Member Schemas
+class ProjectMemberBase(BaseModel):
     email: str
     name: str
     role: Optional[str] = None
 
 
-class TeamMemberCreate(TeamMemberBase):
-    team_id: int
+class ProjectMemberCreate(ProjectMemberBase):
+    project_id: int
 
 
-class TeamMember(TeamMemberBase):
+class ProjectMember(ProjectMemberBase):
     id: int
-    team_id: int
+    project_id: int
     joined_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class TeamBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-
-
-class TeamCreate(TeamBase):
-    pass
-
-
-class Team(TeamBase):
-    id: int
-    created_at: datetime
-    members: List[TeamMember] = []
 
     class Config:
         from_attributes = True
@@ -154,22 +136,6 @@ class Task(TaskBase):
 
 
 # Analysis Response Schemas
-class TeamEffectivenessMetrics(BaseModel):
-    team_id: int
-    team_name: str
-    effectiveness_score: float  # 0-100
-    trend: str  # improving, stable, declining
-    total_commits: int
-    total_prs: int
-    avg_pr_review_time: float
-    active_contributors: int
-    has_alert: bool
-    alert_message: Optional[str] = None
-    alert_severity: Optional[str] = None
-    period_start: datetime
-    period_end: datetime
-
-
 class ProjectEffectivenessMetrics(BaseModel):
     """Метрики эффективности проекта / Project effectiveness metrics"""
     project_id: int

@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from .base_provider import BaseDataProvider
 from app.models.models import (
-    Project, Team, TeamMember, Commit, PullRequest,
+    Project, ProjectMember, Commit, PullRequest,
     CodeReview, Task
 )
 
@@ -264,8 +264,8 @@ class MockDataProvider(BaseDataProvider):
         commits_created = []
         for commit_data in commits_data:
             # Найти автора по email
-            author = db.query(TeamMember).filter(
-                TeamMember.email == commit_data['author_email']
+            author = db.query(ProjectMember).filter(
+                ProjectMember.email == commit_data['author_email']
             ).first()
             
             commit = Commit(
@@ -294,8 +294,8 @@ class MockDataProvider(BaseDataProvider):
         # Сохранить pull request в базе данных
         prs_created = []
         for pr_data in prs_data:
-            author = db.query(TeamMember).filter(
-                TeamMember.email == pr_data['author_email']
+            author = db.query(ProjectMember).filter(
+                ProjectMember.email == pr_data['author_email']
             ).first()
             
             pr = PullRequest(
@@ -326,8 +326,8 @@ class MockDataProvider(BaseDataProvider):
         reviews_created = []
         
         for review_data in reviews_data:
-            reviewer = db.query(TeamMember).filter(
-                TeamMember.email == review_data['reviewer_email']
+            reviewer = db.query(ProjectMember).filter(
+                ProjectMember.email == review_data['reviewer_email']
             ).first()
             
             review = CodeReview(
@@ -347,8 +347,8 @@ class MockDataProvider(BaseDataProvider):
         # Сохранить задачи
         tasks_created = []
         for task_data in tasks_data:
-            assignee = db.query(TeamMember).filter(
-                TeamMember.email == task_data['assignee_email']
+            assignee = db.query(ProjectMember).filter(
+                ProjectMember.email == task_data['assignee_email']
             ).first()
             
             task = Task(
