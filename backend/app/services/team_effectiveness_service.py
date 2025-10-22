@@ -14,7 +14,8 @@ class TeamEffectivenessService:
         db: Session,
         team_id: int,
         period_start: datetime,
-        period_end: datetime
+        period_end: datetime,
+        project_id: int = None
     ) -> Dict:
         """Calculate comprehensive team effectiveness score."""
         team = db.query(Team).filter(Team.id == team_id).first()
@@ -30,16 +31,22 @@ class TeamEffectivenessService:
         ).all()
         
         # Get pull requests by team members
-        prs = db.query(PullRequest).filter(
+        pr_query = db.query(PullRequest).filter(
             PullRequest.author_id.in_(member_ids),
             PullRequest.created_at.between(period_start, period_end)
-        ).all()
+        )
+        if project_id:
+            pr_query = pr_query.filter(PullRequest.project_id == project_id)
+        prs = pr_query.all()
         
         # Get tasks assigned to team
-        tasks = db.query(Task).filter(
+        task_query = db.query(Task).filter(
             Task.assignee_id.in_(member_ids),
             Task.created_at.between(period_start, period_end)
-        ).all()
+        )
+        if project_id:
+            task_query = task_query.filter(Task.project_id == project_id)
+        tasks = task_query.all()
         
         # Calculate metrics
         total_commits = len(commits)

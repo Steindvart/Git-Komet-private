@@ -127,11 +127,13 @@ export const useApi = () => {
   }
 
   // Metrics API
-  const fetchTeamMetrics = async (teamId: number, periodDays: number = 30) => {
+  const fetchTeamMetrics = async (teamId: number, periodDays: number = 30, projectId?: number) => {
     try {
-      const response = await fetch(
-        `${apiBase}/metrics/team/${teamId}/effectiveness?period_days=${periodDays}`
-      )
+      let url = `${apiBase}/metrics/team/${teamId}/effectiveness?period_days=${periodDays}`
+      if (projectId) {
+        url += `&project_id=${projectId}`
+      }
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Failed to fetch team metrics')
       }
@@ -142,11 +144,13 @@ export const useApi = () => {
     }
   }
 
-  const fetchTechnicalDebt = async (teamId: number, periodDays: number = 30) => {
+  const fetchTechnicalDebt = async (teamId: number, periodDays: number = 30, projectId?: number) => {
     try {
-      const response = await fetch(
-        `${apiBase}/metrics/team/${teamId}/technical-debt?period_days=${periodDays}`
-      )
+      let url = `${apiBase}/metrics/team/${teamId}/technical-debt?period_days=${periodDays}`
+      if (projectId) {
+        url += `&project_id=${projectId}`
+      }
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Failed to fetch technical debt')
       }
@@ -157,11 +161,13 @@ export const useApi = () => {
     }
   }
 
-  const fetchBottlenecks = async (teamId: number, periodDays: number = 30) => {
+  const fetchBottlenecks = async (teamId: number, periodDays: number = 30, projectId?: number) => {
     try {
-      const response = await fetch(
-        `${apiBase}/metrics/team/${teamId}/bottlenecks?period_days=${periodDays}`
-      )
+      let url = `${apiBase}/metrics/team/${teamId}/bottlenecks?period_days=${periodDays}`
+      if (projectId) {
+        url += `&project_id=${projectId}`
+      }
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Failed to fetch bottlenecks')
       }

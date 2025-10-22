@@ -18,6 +18,7 @@ router = APIRouter()
 def get_team_effectiveness(
     team_id: int,
     period_days: int = Query(default=30, ge=1, le=365),
+    project_id: int = Query(default=None, description="Optional project ID to filter metrics"),
     db: Session = Depends(get_db)
 ):
     """
@@ -26,12 +27,13 @@ def get_team_effectiveness(
     - Activity metrics (commits, PRs, active contributors)
     - Performance indicators
     - Alerts and recommendations
+    - Optional project_id filter to analyze specific project
     """
     period_end = datetime.utcnow()
     period_start = period_end - timedelta(days=period_days)
     
     metrics = TeamEffectivenessService.calculate_effectiveness_score(
-        db, team_id, period_start, period_end
+        db, team_id, period_start, period_end, project_id=project_id
     )
     
     if not metrics:
@@ -59,6 +61,7 @@ def get_team_effectiveness(
 def get_technical_debt_analysis(
     team_id: int,
     period_days: int = Query(default=30, ge=1, le=365),
+    project_id: int = Query(default=None, description="Optional project ID to filter metrics"),
     db: Session = Depends(get_db)
 ):
     """
@@ -67,6 +70,7 @@ def get_technical_debt_analysis(
     - TODO comment growth
     - Code review quality metrics
     - Recommendations for improvement
+    - Optional project_id filter to analyze specific project
     """
     period_end = datetime.utcnow()
     period_start = period_end - timedelta(days=period_days)
@@ -74,6 +78,7 @@ def get_technical_debt_analysis(
     analysis = TechnicalDebtService.analyze_technical_debt(
         db=db,
         team_id=team_id,
+        project_id=project_id,
         period_start=period_start,
         period_end=period_end
     )
@@ -97,6 +102,7 @@ def get_technical_debt_analysis(
 def get_bottleneck_analysis(
     team_id: int,
     period_days: int = Query(default=30, ge=1, le=365),
+    project_id: int = Query(default=None, description="Optional project ID to filter metrics"),
     db: Session = Depends(get_db)
 ):
     """
@@ -105,6 +111,7 @@ def get_bottleneck_analysis(
     - Identification of slowest stage
     - Impact assessment
     - Recommendations to improve workflow
+    - Optional project_id filter to analyze specific project
     """
     period_end = datetime.utcnow()
     period_start = period_end - timedelta(days=period_days)
@@ -112,6 +119,7 @@ def get_bottleneck_analysis(
     analysis = BottleneckService.analyze_bottlenecks(
         db=db,
         team_id=team_id,
+        project_id=project_id,
         period_start=period_start,
         period_end=period_end
     )

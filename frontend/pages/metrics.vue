@@ -3,162 +3,185 @@
     <h1>Метрики и аналитика</h1>
     <p class="subtitle">Анализ эффективности команды на основе Git-метрик</p>
 
-    <div class="metrics-container">
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <label>Команда:</label>
+        <select v-model="selectedTeamId" @change="loadMetrics">
+          <option :value="null">Выберите команду</option>
+          <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Проект (опционально):</label>
+        <select v-model="selectedProjectId" @change="loadMetrics">
+          <option :value="null">Все проекты</option>
+          <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Период (дней):</label>
+        <select v-model="periodDays" @change="loadMetrics">
+          <option :value="7">7 дней</option>
+          <option :value="30">30 дней</option>
+          <option :value="90">90 дней</option>
+        </select>
+      </div>
+    </div>
+
+    <div v-if="error" class="error-message">
+      {{ error }}
+      <button @click="error = null" class="close-btn">×</button>
+    </div>
+
+    <div v-if="loading" class="loading-state">
+      Загрузка метрик...
+    </div>
+
+    <div v-else-if="!selectedTeamId" class="empty-state">
+      <p>Выберите команду для просмотра метрик</p>
+    </div>
+
+    <div v-else class="metrics-container">
       <!-- Team Effectiveness Score -->
       <div class="card full-width">
         <h3>📊 Оценка эффективности команды</h3>
         <p>Общий показатель производительности команды (0-100, аналогично SonarQube)</p>
-        <div class="score-display">
+        <div v-if="teamMetrics" class="score-display">
           <div class="score-circle">
-            <span class="score-value">{{ effectivenessScore }}</span>
+            <span class="score-value">{{ Math.round(teamMetrics.effectiveness_score) }}</span>
             <span class="score-label">/100</span>
           </div>
           <div class="score-details">
             <div class="score-item">
               <span class="label">Тренд:</span>
-              <span class="value">улучшение</span>
+              <span class="value">{{ teamMetrics.trend === 'stable' ? 'стабильно' : teamMetrics.trend }}</span>
+            </div>
+            <div class="score-item">
+              <span class="label">Коммитов:</span>
+              <span class="value">{{ teamMetrics.total_commits }}</span>
+            </div>
+            <div class="score-item">
+              <span class="label">Pull Request:</span>
+              <span class="value">{{ teamMetrics.total_prs }}</span>
             </div>
             <div class="score-item">
               <span class="label">Активные участники:</span>
-              <span class="value">{{ activeContributors }}</span>
+              <span class="value">{{ teamMetrics.active_contributors }}</span>
             </div>
             <div class="score-item">
               <span class="label">Среднее время ревью:</span>
-              <span class="value">{{ avgReviewTime }}ч</span>
+              <span class="value">{{ teamMetrics.avg_pr_review_time.toFixed(1) }}ч</span>
             </div>
           </div>
         </div>
-        <div v-if="hasAlert" class="alert" :class="`alert-${alertSeverity}`">
-          <strong>{{ alertSeverity === 'critical' ? '🚨' : '⚠️' }}</strong>
-          {{ alertMessage }}
+        <div v-if="teamMetrics && teamMetrics.has_alert" class="alert" :class="`alert-${teamMetrics.alert_severity}`">
+          <strong>{{ teamMetrics.alert_severity === 'critical' ? '🚨' : '⚠️' }}</strong>
+          {{ teamMetrics.alert_message }}
         </div>
       </div>
 
       <!-- Work-Life Balance -->
-      <div class="card">
+      <div v-if="teamMetrics" class="card">
         <h3>💼 Забота о сотрудниках</h3>
         <p>Отслеживание переработок и активности вне рабочего времени</p>
         <div class="metric-group">
           <div class="metric-item">
             <span class="metric-label">Коммиты после рабочего времени</span>
-            <span class="metric-value">{{ afterHoursPercentage }}% <span class="trend" :class="afterHoursPercentage > 30 ? 'up' : 'stable'">{{ afterHoursPercentage > 30 ? '↑' : '→' }}</span></span>
+            <span class="metric-value">{{ teamMetrics.after_hours_percentage.toFixed(1) }}% <span class="trend" :class="teamMetrics.after_hours_percentage > 30 ? 'up' : 'stable'">{{ teamMetrics.after_hours_percentage > 30 ? '↑' : '→' }}</span></span>
           </div>
           <div class="metric-item">
             <span class="metric-label">Коммиты в выходные</span>
-            <span class="metric-value">{{ weekendPercentage }}% <span class="trend" :class="weekendPercentage > 20 ? 'up' : 'stable'">{{ weekendPercentage > 20 ? '↑' : '→' }}</span></span>
+            <span class="metric-value">{{ teamMetrics.weekend_percentage.toFixed(1) }}% <span class="trend" :class="teamMetrics.weekend_percentage > 20 ? 'up' : 'stable'">{{ teamMetrics.weekend_percentage > 20 ? '↑' : '→' }}</span></span>
           </div>
           <div class="metric-item">
-            <span class="metric-label">Пики активности</span>
-            <span class="metric-value">{{ peakHours }}</span>
+            <span class="metric-label">Code Churn (переписывание)</span>
+            <span class="metric-value">{{ teamMetrics.churn_rate.toFixed(1) }}% <span class="trend" :class="teamMetrics.churn_rate > 25 ? 'up' : 'stable'">{{ teamMetrics.churn_rate > 25 ? '↑' : '→' }}</span></span>
           </div>
         </div>
-        <div v-if="afterHoursPercentage > 30 || weekendPercentage > 20" class="alert alert-warning">
+        <div v-if="teamMetrics.after_hours_percentage > 30 || teamMetrics.weekend_percentage > 20" class="alert alert-warning">
           <strong>⚠️</strong> Обнаружена высокая активность вне рабочего времени. Проверьте нагрузку на команду.
         </div>
       </div>
 
       <!-- Technical Debt Analysis -->
-      <div class="card">
+      <div v-if="technicalDebt" class="card">
         <h3>🔧 Анализ технического долга</h3>
         <div class="metric-group">
           <div class="metric-item">
             <span class="metric-label">Покрытие тестами</span>
             <div class="metric-bar">
-              <div class="bar-fill" :style="{ width: '67%' }"></div>
+              <div class="bar-fill" :style="{ width: technicalDebt.test_coverage + '%' }"></div>
             </div>
-            <span class="metric-value">67% <span class="trend up">↑</span></span>
+            <span class="metric-value">{{ technicalDebt.test_coverage.toFixed(1) }}% <span class="trend" :class="getTrendClass(technicalDebt.test_coverage_trend)">{{ getTrendArrow(technicalDebt.test_coverage_trend) }}</span></span>
           </div>
           <div class="metric-item">
             <span class="metric-label">TODO в коде</span>
-            <span class="metric-value">{{ todoInCode }} <span class="trend stable">→</span></span>
+            <span class="metric-value">{{ technicalDebt.todo_count_code }} <span class="trend" :class="getTrendClass(technicalDebt.todo_trend, true)">{{ getTrendArrow(technicalDebt.todo_trend, true) }}</span></span>
           </div>
           <div class="metric-item">
             <span class="metric-label">TODO в ревью</span>
-            <span class="metric-value">{{ todoInReviews }} <span class="trend up">↑</span></span>
+            <span class="metric-value">{{ technicalDebt.todo_count_reviews }} <span class="trend" :class="getTrendClass(technicalDebt.todo_trend, true)">{{ getTrendArrow(technicalDebt.todo_trend, true) }}</span></span>
           </div>
           <div class="metric-item">
             <span class="metric-label">Code Churn (переписывание)</span>
-            <span class="metric-value">{{ churnRate }}% <span class="trend" :class="churnRate > 25 ? 'up' : 'stable'">{{ churnRate > 25 ? '↑' : '→' }}</span></span>
+            <span class="metric-value">{{ technicalDebt.churn_rate.toFixed(1) }}% <span class="trend" :class="technicalDebt.churn_rate > 25 ? 'up' : 'stable'">{{ technicalDebt.churn_rate > 25 ? '↑' : '→' }}</span></span>
           </div>
           <div class="metric-item">
             <span class="metric-label">Плотность комментариев в ревью</span>
-            <span class="metric-value">{{ reviewCommentDensity }} на PR <span class="trend down">↓</span></span>
+            <span class="metric-value">{{ technicalDebt.review_comment_density.toFixed(1) }} на PR</span>
           </div>
           <div class="metric-item">
             <span class="metric-label">Оценка долга</span>
-            <span class="metric-value debt-score">{{ debtScore }}/100</span>
+            <span class="metric-value debt-score">{{ technicalDebt.technical_debt_score.toFixed(0) }}/100</span>
           </div>
         </div>
         <div class="recommendations">
           <h4>💡 Рекомендации:</h4>
           <ul>
-            <li>Покрытие тестами улучшается - продолжайте в том же духе!</li>
-            <li>TODO в ревью растут - рассмотрите оформление их в отдельные тикеты</li>
-            <li v-if="churnRate > 25">⚠️ Высокий уровень переписывания кода - проверьте качество планирования</li>
+            <li v-for="rec in technicalDebt.recommendations" :key="rec">{{ rec }}</li>
           </ul>
         </div>
       </div>
 
       <!-- Bottleneck Analysis -->
-      <div class="card">
+      <div v-if="bottlenecks" class="card">
         <h3>🚧 Анализ узких мест</h3>
         <p>Этап workflow с самым долгим средним временем</p>
         <div class="bottleneck-info">
           <div class="bottleneck-stage">
-            <span class="stage-icon">🔍</span>
-            <span class="stage-name">Ревью кода</span>
+            <span class="stage-icon">{{ getStageIcon(bottlenecks.bottleneck_stage) }}</span>
+            <span class="stage-name">{{ getStageName(bottlenecks.bottleneck_stage) }}</span>
           </div>
           <div class="bottleneck-stats">
             <div class="stat">
               <span class="stat-label">Среднее время:</span>
-              <span class="stat-value">48.5 часов</span>
+              <span class="stat-value">{{ bottlenecks.avg_time_in_stage.toFixed(1) }} часов</span>
             </div>
             <div class="stat">
               <span class="stat-label">Затронутых задач:</span>
-              <span class="stat-value">15</span>
+              <span class="stat-value">{{ bottlenecks.affected_tasks_count }}</span>
             </div>
             <div class="stat">
               <span class="stat-label">Оценка влияния:</span>
-              <span class="stat-value impact-high">68/100</span>
+              <span class="stat-value" :class="getImpactClass(bottlenecks.impact_score)">{{ bottlenecks.impact_score.toFixed(0) }}/100</span>
             </div>
           </div>
         </div>
-        <div class="stage-breakdown">
+        <div v-if="bottlenecks.stage_breakdown" class="stage-breakdown">
           <h4>Распределение по этапам:</h4>
-          <div class="stage-item">
-            <span class="stage-label">📋 TODO</span>
+          <div v-for="(stage, key) in bottlenecks.stage_breakdown" :key="key" class="stage-item">
+            <span class="stage-label">{{ getStageIcon(key) }} {{ getStageName(key) }}</span>
             <div class="stage-bar">
-              <div class="bar-fill" style="width: 20%"></div>
+              <div class="bar-fill" :class="{ 'warning': key === bottlenecks.bottleneck_stage }" :style="{ width: getStageWidth(stage.avg_time, bottlenecks.stage_breakdown) + '%' }"></div>
             </div>
-            <span class="stage-time">12ч</span>
-          </div>
-          <div class="stage-item">
-            <span class="stage-label">💻 Разработка</span>
-            <div class="stage-bar">
-              <div class="bar-fill" style="width: 45%"></div>
-            </div>
-            <span class="stage-time">28ч</span>
-          </div>
-          <div class="stage-item">
-            <span class="stage-label">👁️ Ревью</span>
-            <div class="stage-bar">
-              <div class="bar-fill warning" style="width: 80%"></div>
-            </div>
-            <span class="stage-time">48ч</span>
-          </div>
-          <div class="stage-item">
-            <span class="stage-label">🧪 Тестирование</span>
-            <div class="stage-bar">
-              <div class="bar-fill" style="width: 25%"></div>
-            </div>
-            <span class="stage-time">15ч</span>
+            <span class="stage-time">{{ stage.avg_time.toFixed(0) }}ч ({{ stage.count }})</span>
           </div>
         </div>
         <div class="recommendations">
           <h4>💡 Рекомендации:</h4>
           <ul>
-            <li>⚠️ Ревью кода занимает более 2 дней в среднем</li>
-            <li>Рассмотрите: увеличение мощности ревьюеров или установку SLA для ревью</li>
+            <li v-for="rec in bottlenecks.recommendations" :key="rec">{{ rec }}</li>
           </ul>
         </div>
       </div>
@@ -176,36 +199,188 @@
 </template>
 
 <script setup lang="ts">
-// Демо-данные - в реальном приложении получаем из API
-const effectivenessScore = ref(74)
-const activeContributors = ref(8)
-const avgReviewTime = ref(24.5)
-const hasAlert = ref(true)
-const alertSeverity = ref('warning')
-const alertMessage = ref('Эффективность команды может быть улучшена. Рассмотрите оптимизацию процессов.')
+const api = useApi()
 
-// Work-life balance metrics
-const afterHoursPercentage = ref(28)
-const weekendPercentage = ref(15)
-const peakHours = ref('18:00-20:00')
+// State
+const teams = ref([])
+const projects = ref([])
+const selectedTeamId = ref<number | null>(null)
+const selectedProjectId = ref<number | null>(null)
+const periodDays = ref(30)
+const loading = ref(false)
+const error = ref<string | null>(null)
 
-// Technical debt metrics
-const todoInCode = ref(42)
-const todoInReviews = ref(18)
-const churnRate = ref(22)
-const reviewCommentDensity = ref(3.2)
-const debtScore = ref(75)
+// Metrics data
+const teamMetrics = ref(null)
+const technicalDebt = ref(null)
+const bottlenecks = ref(null)
 
-// В реальной реализации, получаем данные из:
-// GET /api/v1/metrics/team/{id}/effectiveness
-// GET /api/v1/metrics/team/{id}/technical-debt
-// GET /api/v1/metrics/team/{id}/bottlenecks
+// Load teams and projects on mount
+onMounted(async () => {
+  await loadTeamsAndProjects()
+})
+
+const loadTeamsAndProjects = async () => {
+  try {
+    teams.value = await api.fetchTeams()
+    projects.value = await api.fetchProjects()
+    
+    // Auto-select first team if available
+    if (teams.value.length > 0) {
+      selectedTeamId.value = teams.value[0].id
+      await loadMetrics()
+    }
+  } catch (e: any) {
+    error.value = 'Не удалось загрузить данные: ' + e.message
+  }
+}
+
+const loadMetrics = async () => {
+  if (!selectedTeamId.value) return
+  
+  loading.value = true
+  error.value = null
+  
+  try {
+    // Load all metrics in parallel
+    const [effectiveness, debt, bottleneck] = await Promise.all([
+      api.fetchTeamMetrics(selectedTeamId.value, periodDays.value, selectedProjectId.value),
+      api.fetchTechnicalDebt(selectedTeamId.value, periodDays.value, selectedProjectId.value),
+      api.fetchBottlenecks(selectedTeamId.value, periodDays.value, selectedProjectId.value)
+    ])
+    
+    teamMetrics.value = effectiveness
+    technicalDebt.value = debt
+    bottlenecks.value = bottleneck
+  } catch (e: any) {
+    error.value = 'Не удалось загрузить метрики: ' + e.message
+  } finally {
+    loading.value = false
+  }
+}
+
+// Helper functions for displaying data
+const getTrendClass = (trend: string, inverted = false) => {
+  if (inverted) {
+    return trend === 'up' ? 'up' : trend === 'down' ? 'down' : 'stable'
+  }
+  return trend === 'up' ? 'down' : trend === 'down' ? 'up' : 'stable'
+}
+
+const getTrendArrow = (trend: string, inverted = false) => {
+  if (inverted) {
+    return trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'
+  }
+  return trend === 'up' ? '↓' : trend === 'down' ? '↑' : '→'
+}
+
+const getStageIcon = (stage: string) => {
+  const icons = {
+    'todo': '📋',
+    'development': '💻',
+    'review': '👁️',
+    'testing': '🧪',
+    'none': '✓'
+  }
+  return icons[stage] || '❓'
+}
+
+const getStageName = (stage: string) => {
+  const names = {
+    'todo': 'TODO',
+    'development': 'Разработка',
+    'review': 'Ревью',
+    'testing': 'Тестирование',
+    'none': 'Нет узких мест'
+  }
+  return names[stage] || stage
+}
+
+const getImpactClass = (score: number) => {
+  if (score > 70) return 'impact-high'
+  if (score > 40) return 'impact-medium'
+  return 'impact-low'
+}
+
+const getStageWidth = (time: number, allStages: any) => {
+  const maxTime = Math.max(...Object.values(allStages).map((s: any) => s.avg_time))
+  return (time / maxTime) * 100
+}
 </script>
 
 <style scoped>
 .subtitle {
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
+}
+
+.filters {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.filter-group select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 0.375rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.error-message {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message .close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #c33;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
 }
 
 .metrics-container {
@@ -404,6 +579,14 @@ const debtScore = ref(75)
 
 .impact-high {
   color: var(--danger);
+}
+
+.impact-medium {
+  color: var(--warning);
+}
+
+.impact-low {
+  color: var(--success);
 }
 
 .stage-breakdown {
