@@ -126,7 +126,68 @@ export const useApi = () => {
     }
   }
 
-  // Metrics API
+  // Metrics API - Project-based
+  const fetchProjectMetrics = async (projectId: number, periodDays: number = 30) => {
+    try {
+      const response = await fetch(
+        `${apiBase}/metrics/project/${projectId}/effectiveness?period_days=${periodDays}`
+      )
+      if (!response.ok) {
+        throw new Error('Failed to fetch project metrics')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching project metrics:', error)
+      throw error
+    }
+  }
+
+  const fetchProjectTechnicalDebt = async (projectId: number, periodDays: number = 30) => {
+    try {
+      const response = await fetch(
+        `${apiBase}/metrics/project/${projectId}/technical-debt?period_days=${periodDays}`
+      )
+      if (!response.ok) {
+        throw new Error('Failed to fetch technical debt')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching technical debt:', error)
+      throw error
+    }
+  }
+
+  const fetchProjectBottlenecks = async (projectId: number, periodDays: number = 30) => {
+    try {
+      const response = await fetch(
+        `${apiBase}/metrics/project/${projectId}/bottlenecks?period_days=${periodDays}`
+      )
+      if (!response.ok) {
+        throw new Error('Failed to fetch bottlenecks')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching bottlenecks:', error)
+      throw error
+    }
+  }
+
+  const fetchProjectEmployeeCare = async (projectId: number, periodDays: number = 30) => {
+    try {
+      const response = await fetch(
+        `${apiBase}/metrics/project/${projectId}/employee-care?period_days=${periodDays}`
+      )
+      if (!response.ok) {
+        throw new Error('Failed to fetch employee care metrics')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching employee care metrics:', error)
+      throw error
+    }
+  }
+  
+  // Legacy Team Metrics API (deprecated)
   const fetchTeamMetrics = async (teamId: number, periodDays: number = 30) => {
     try {
       const response = await fetch(
@@ -178,12 +239,17 @@ export const useApi = () => {
     createProject,
     deleteProject,
     generateMockData,
-    // Teams
+    // Teams (legacy)
     fetchTeams,
     createTeam,
     deleteTeam,
     addTeamMember,
-    // Metrics
+    // Project Metrics
+    fetchProjectMetrics,
+    fetchProjectTechnicalDebt,
+    fetchProjectBottlenecks,
+    fetchProjectEmployeeCare,
+    // Team Metrics (legacy)
     fetchTeamMetrics,
     fetchTechnicalDebt,
     fetchBottlenecks

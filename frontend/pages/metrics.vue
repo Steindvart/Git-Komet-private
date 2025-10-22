@@ -1,9 +1,33 @@
 <template>
   <div>
     <h1>Метрики и аналитика</h1>
-    <p class="subtitle">Анализ эффективности команды на основе Git-метрик</p>
+    <p class="subtitle">Анализ эффективности проекта на основе Git-метрик</p>
 
-    <div class="metrics-container">
+    <!-- Project Selector -->
+    <div class="project-selector">
+      <label for="project-select">Проект:</label>
+      <select 
+        id="project-select" 
+        v-model="selectedProjectId" 
+        @change="onProjectChange"
+        :disabled="loading"
+      >
+        <option :value="null">-- Выберите проект --</option>
+        <option v-for="project in projects" :key="project.id" :value="project.id">
+          {{ project.name }}
+        </option>
+      </select>
+    </div>
+
+    <div v-if="!selectedProjectId" class="empty-state">
+      <p>Выберите проект для просмотра метрик и аналитики</p>
+    </div>
+
+    <div v-else-if="loading" class="loading-state">
+      Загрузка метрик...
+    </div>
+
+    <div v-else class="metrics-container">
       <!-- Team Effectiveness Score -->
       <div class="card full-width">
         <h3>📊 Оценка эффективности команды</h3>
@@ -103,25 +127,20 @@
       <div class="card">
         <h3>🚧 Анализ узких мест</h3>
         <p>Этап workflow с самым долгим средним временем</p>
-        <div class="bottleneck-info">
+        <div class="bottleneck-info" v-if="bottleneckStage !== 'none'">
           <div class="bottleneck-stage">
             <span class="stage-icon">🔍</span>
-            <span class="stage-name">Ревью кода</span>
+            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }}</span>
           </div>
           <div class="bottleneck-stats">
             <div class="stat">
               <span class="stat-label">Среднее время:</span>
-              <span class="stat-value">48.5 часов</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Затронутых задач:</span>
-              <span class="stat-value">15</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Оценка влияния:</span>
-              <span class="stat-value impact-high">68/100</span>
+              <span class="stat-value">{{ bottleneckTime.toFixed(1) }} часов</span>
             </div>
           </div>
+        </div>
+        <div v-else class="bottleneck-info">
+          <p>✓ Нет явных узких мест в workflow</p>
         </div>
         <div class="stage-breakdown">
           <h4>Распределение по этапам:</h4>
@@ -176,36 +195,164 @@
 </template>
 
 <script setup lang="ts">
-// Демо-данные - в реальном приложении получаем из API
-const effectivenessScore = ref(74)
-const activeContributors = ref(8)
-const avgReviewTime = ref(24.5)
-const hasAlert = ref(true)
-const alertSeverity = ref('warning')
-const alertMessage = ref('Эффективность команды может быть улучшена. Рассмотрите оптимизацию процессов.')
+const api = useApi()
+const projects = ref([])
+const selectedProjectId = ref<number | null>(null)
+const loading = ref(false)
+
+// Metrics data
+const effectivenessScore = ref(0)
+const activeContributors = ref(0)
+const avgReviewTime = ref(0)
+const hasAlert = ref(false)
+const alertSeverity = ref('')
+const alertMessage = ref('')
 
 // Work-life balance metrics
-const afterHoursPercentage = ref(28)
-const weekendPercentage = ref(15)
-const peakHours = ref('18:00-20:00')
+const afterHoursPercentage = ref(0)
+const weekendPercentage = ref(0)
+const peakHours = ref('--:--')
 
 // Technical debt metrics
-const todoInCode = ref(42)
-const todoInReviews = ref(18)
-const churnRate = ref(22)
-const reviewCommentDensity = ref(3.2)
-const debtScore = ref(75)
+const todoInCode = ref(0)
+const todoInReviews = ref(0)
+const churnRate = ref(0)
+const reviewCommentDensity = ref(0)
+const debtScore = ref(0)
 
-// В реальной реализации, получаем данные из:
-// GET /api/v1/metrics/team/{id}/effectiveness
-// GET /api/v1/metrics/team/{id}/technical-debt
-// GET /api/v1/metrics/team/{id}/bottlenecks
+// Bottleneck data
+const bottleneckStage = ref('none')
+const bottleneckTime = ref(0)
+
+onMounted(async () => {
+  await loadProjects()
+})
+
+const loadProjects = async () => {
+  loading.value = true
+  try {
+    projects.value = await api.fetchProjects()
+    if (projects.value.length > 0) {
+      selectedProjectId.value = projects.value[0].id
+      await loadAllMetrics()
+    }
+  } catch (error) {
+    console.error('Error loading projects:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const onProjectChange = async () => {
+  if (selectedProjectId.value) {
+    await loadAllMetrics()
+  }
+}
+
+const loadAllMetrics = async () => {
+  if (!selectedProjectId.value) return
+  
+  loading.value = true
+  try {
+    // Load effectiveness metrics
+    const effectiveness = await api.fetchProjectMetrics(selectedProjectId.value)
+    effectivenessScore.value = Math.round(effectiveness.effectiveness_score)
+    activeContributors.value = effectiveness.active_contributors
+    avgReviewTime.value = effectiveness.avg_pr_review_time
+    hasAlert.value = effectiveness.has_alert
+    alertSeverity.value = effectiveness.alert_severity || 'info'
+    alertMessage.value = effectiveness.alert_message || ''
+    afterHoursPercentage.value = Math.round(effectiveness.after_hours_percentage)
+    weekendPercentage.value = Math.round(effectiveness.weekend_percentage)
+    churnRate.value = Math.round(effectiveness.churn_rate)
+    
+    // Load technical debt
+    const debt = await api.fetchProjectTechnicalDebt(selectedProjectId.value)
+    todoInCode.value = debt.todo_count
+    todoInReviews.value = debt.todo_in_reviews || 0
+    reviewCommentDensity.value = debt.review_comment_density
+    debtScore.value = Math.round(debt.technical_debt_score)
+    
+    // Load bottlenecks
+    const bottleneck = await api.fetchProjectBottlenecks(selectedProjectId.value)
+    bottleneckStage.value = bottleneck.bottleneck_stage
+    bottleneckTime.value = bottleneck.avg_time_in_stage
+    
+  } catch (error) {
+    console.error('Error loading metrics:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const getStageDisplayName = (stage: string) => {
+  const names: Record<string, string> = {
+    'todo': 'TODO (ожидание начала)',
+    'development': 'Разработка',
+    'review': 'Ревью кода',
+    'testing': 'Тестирование',
+    'none': 'Нет узких мест'
+  }
+  return names[stage] || stage
+}
 </script>
 
 <style scoped>
 .subtitle {
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
+}
+
+.project-selector {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: var(--bg-secondary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
+}
+
+.project-selector label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.project-selector select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 0.375rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.project-selector select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.project-selector select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
+}
+
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
 }
 
 .metrics-container {
