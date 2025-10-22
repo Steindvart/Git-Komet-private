@@ -3,13 +3,22 @@
     <h1>Проекты</h1>
     <p class="subtitle">Управление Git-репозиториями</p>
 
+    <div v-if="error" class="error-message">
+      {{ error }}
+      <button @click="error = null" class="close-btn">×</button>
+    </div>
+
     <div class="actions-bar">
-      <button class="btn btn-primary" @click="showAddModal = true">
+      <button class="btn btn-primary" @click="showAddModal = true" :disabled="loading">
         + Добавить проект
       </button>
     </div>
 
-    <div class="projects-list">
+    <div v-if="loading && projects.length === 0" class="loading-state">
+      Загрузка...
+    </div>
+
+    <div v-else class="projects-list">
       <div v-if="projects.length === 0" class="empty-state">
         <p>Пока нет проектов. Добавьте ваш первый Git-репозиторий!</p>
       </div>
@@ -20,10 +29,10 @@
           <p class="project-id">ID: {{ project.external_id }}</p>
           <p v-if="project.description" class="project-description">{{ project.description }}</p>
           <div class="card-actions">
-            <button class="btn btn-secondary" @click="generateMockData(project.id)">
+            <button class="btn btn-secondary" @click="generateMockData(project.id)" :disabled="loading">
               Сгенерировать демо-данные
             </button>
-            <button class="btn" @click="deleteProject(project.id)">
+            <button class="btn" @click="deleteProject(project.id)" :disabled="loading">
               Удалить
             </button>
           </div>
@@ -39,19 +48,21 @@
         <form @submit.prevent="addProject">
           <div class="form-group">
             <label>Название</label>
-            <input v-model="newProject.name" type="text" required />
+            <input v-model="newProject.name" type="text" required :disabled="loading" />
           </div>
           <div class="form-group">
             <label>Внешний ID (ID проекта)</label>
-            <input v-model="newProject.external_id" type="text" required />
+            <input v-model="newProject.external_id" type="text" required :disabled="loading" />
           </div>
           <div class="form-group">
             <label>Описание</label>
-            <textarea v-model="newProject.description"></textarea>
+            <textarea v-model="newProject.description" :disabled="loading"></textarea>
           </div>
           <div class="modal-actions">
-            <button type="submit" class="btn btn-primary">Добавить</button>
-            <button type="button" class="btn" @click="showAddModal = false">Отмена</button>
+            <button type="submit" class="btn btn-primary" :disabled="loading">
+              {{ loading ? 'Добавление...' : 'Добавить' }}
+            </button>
+            <button type="button" class="btn" @click="showAddModal = false" :disabled="loading">Отмена</button>
           </div>
         </form>
       </div>
@@ -60,29 +71,98 @@
 </template>
 
 <script setup lang="ts">
+const api = useApi()
 const showAddModal = ref(false)
 const projects = ref([])
+const teams = ref([])
+const selectedTeamId = ref<number | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
 const newProject = ref({
   name: '',
   external_id: '',
   description: ''
 })
 
+// Load projects and teams on mount
+onMounted(async () => {
+  await loadProjects()
+  await loadTeams()
+})
+
+const loadProjects = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    projects.value = await api.fetchProjects()
+  } catch (e: any) {
+    error.value = 'Не удалось загрузить проекты: ' + e.message
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadTeams = async () => {
+  try {
+    teams.value = await api.fetchTeams()
+    if (teams.value.length > 0) {
+      selectedTeamId.value = teams.value[0].id
+    }
+  } catch (e: any) {
+    console.error('Не удалось загрузить команды:', e)
+  }
+}
+
 const addProject = async () => {
-  // API call: POST /api/v1/projects
-  console.log('Добавление проекта:', newProject.value)
-  showAddModal.value = false
-  newProject.value = { name: '', external_id: '', description: '' }
+  loading.value = true
+  error.value = null
+  try {
+    await api.createProject(newProject.value)
+    showAddModal.value = false
+    newProject.value = { name: '', external_id: '', description: '' }
+    await loadProjects()
+  } catch (e: any) {
+    error.value = 'Не удалось создать проект: ' + e.message
+  } finally {
+    loading.value = false
+  }
 }
 
 const generateMockData = async (id: number) => {
-  // API call: POST /api/v1/projects/{id}/generate-mock-data?team_id=1
-  console.log('Генерация демо-данных T1 для проекта:', id)
-  alert('Генерация демо-данных создаст:\n- Коммиты с отслеживанием покрытия тестами\n- Pull Request с временем ревью\n- Ревью кода\n- Задачи с информацией об узких местах')
+  if (!selectedTeamId.value) {
+    alert('Сначала создайте команду на странице "Команды"')
+    return
+  }
+  
+  const confirmed = confirm('Генерация демо-данных создаст:\n- Коммиты с отслеживанием покрытия тестами\n- Pull Request с временем ревью\n- Ревью кода\n- Задачи с информацией об узких местах\n\nПродолжить?')
+  if (!confirmed) return
+  
+  loading.value = true
+  error.value = null
+  try {
+    const result = await api.generateMockData(id, selectedTeamId.value)
+    alert(`Успешно создано:\n- ${result.commits_created} коммитов\n- ${result.pull_requests_created} pull requests\n- ${result.reviews_created} ревью\n- ${result.tasks_created} задач`)
+  } catch (e: any) {
+    error.value = 'Не удалось сгенерировать данные: ' + e.message
+  } finally {
+    loading.value = false
+  }
 }
 
 const deleteProject = async (id: number) => {
-  console.log('Удаление проекта:', id)
+  const confirmed = confirm('Вы уверены, что хотите удалить этот проект?')
+  if (!confirmed) return
+  
+  loading.value = true
+  error.value = null
+  try {
+    await api.deleteProject(id)
+    await loadProjects()
+  } catch (e: any) {
+    error.value = 'Не удалось удалить проект: ' + e.message
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -90,6 +170,36 @@ const deleteProject = async (id: number) => {
 .subtitle {
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
+}
+
+.error-message {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message .close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #c33;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
 }
 
 .actions-bar {
@@ -181,6 +291,12 @@ const deleteProject = async (id: number) => {
   border-color: var(--accent-primary);
 }
 
+.form-group input:disabled,
+.form-group textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .form-group textarea {
   min-height: 100px;
   resize: vertical;
@@ -190,5 +306,10 @@ const deleteProject = async (id: number) => {
   display: flex;
   gap: 0.5rem;
   margin-top: 1.5rem;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

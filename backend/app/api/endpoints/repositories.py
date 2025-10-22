@@ -4,7 +4,7 @@ from typing import List
 from app.db.session import get_db
 from app.models.models import Project as ProjectModel
 from app.schemas.schemas import Project, ProjectCreate
-from app.services.t1_mock_service import T1MockDataService
+from app.services.data_providers import DataProviderFactory
 
 router = APIRouter()
 
@@ -78,15 +78,23 @@ def generate_mock_data(
     db: Session = Depends(get_db)
 ):
     """
-    Generate mock data for a project for demonstration purposes.
+    Сгенерировать данные для проекта, используя настроенного поставщика данных.
     
-    This simulates receiving:
-    - Commits with test coverage and TODO tracking
-    - Pull requests with review times
-    - Code reviews with comment counts
-    - Tasks with stage timing for bottleneck analysis
+    В настоящее время использует mock-поставщика данных для демонстрации.
+    Это симулирует получение:
+    - Коммитов с отслеживанием покрытия тестами и TODO
+    - Pull request с временем ревью
+    - Code review с количеством комментариев
+    - Задач с таймингом этапов для анализа узких мест
     
-    In production, this would be replaced with actual Git repository integration.
+    В продакшене поставщик данных может быть легко заменен на реальный
+    (например, T1DataProvider, GitHubDataProvider) через конфигурацию.
+    
+    Поставщик может быть изменен в коде:
+        DataProviderFactory.set_default('t1')  # После реализации
+    
+    Или можно запросить конкретного поставщика:
+        provider = DataProviderFactory.create('github')  # После реализации
     """
     project = db.query(ProjectModel).filter(
         ProjectModel.id == project_id
@@ -95,7 +103,11 @@ def generate_mock_data(
         raise HTTPException(status_code=404, detail="Project not found")
     
     try:
-        result = T1MockDataService.populate_mock_data(db, team_id, project_id)
+        # Получить настроенного поставщика данных (по умолчанию 'mock')
+        provider = DataProviderFactory.create()
+        
+        # Использовать поставщика для заполнения данных
+        result = provider.populate_data(db, team_id, project_id)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating mock data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating data: {str(e)}")
