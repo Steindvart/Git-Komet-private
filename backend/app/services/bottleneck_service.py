@@ -42,8 +42,8 @@ class BottleneckService:
                 "affected_tasks_count": 0,
                 "impact_score": 0,
                 "recommendations": ["Нет данных за указанный период"],
-                "period_start": period_start,
-                "period_end": period_end,
+                "period_start": period_start.isoformat(),
+                "period_end": period_end.isoformat(),
             }
         
         # Calculate average time in each stage
@@ -155,6 +155,6 @@ class BottleneckService:
             "impact_score": round(impact_score, 2),
             "recommendations": recommendations,
             "stage_breakdown": stage_breakdown,
-            "period_start": period_start,
-            "period_end": period_end,
+            "period_start": period_start.isoformat(),
+            "period_end": period_end.isoformat(),
         }

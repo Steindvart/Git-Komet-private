@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 # Project Schemas (replaces Repository)
@@ -163,11 +163,14 @@ class TeamEffectivenessMetrics(BaseModel):
     total_prs: int
     avg_pr_review_time: float
     active_contributors: int
+    after_hours_percentage: float
+    weekend_percentage: float
+    churn_rate: float
     has_alert: bool
     alert_message: Optional[str] = None
     alert_severity: Optional[str] = None
-    period_start: datetime
-    period_end: datetime
+    period_start: str  # ISO format datetime string
+    period_end: str  # ISO format datetime string
 
 
 class TechnicalDebtAnalysis(BaseModel):
@@ -175,13 +178,15 @@ class TechnicalDebtAnalysis(BaseModel):
     project_id: Optional[int] = None
     test_coverage: float
     test_coverage_trend: str
-    todo_count: int
+    todo_count_code: int
+    todo_count_reviews: int
     todo_trend: str
     review_comment_density: float
+    churn_rate: float
     technical_debt_score: float  # 0-100, lower is better
     recommendations: List[str]
-    period_start: datetime
-    period_end: datetime
+    period_start: str  # ISO format datetime string
+    period_end: str  # ISO format datetime string
 
 
 class BottleneckAnalysis(BaseModel):
@@ -191,5 +196,6 @@ class BottleneckAnalysis(BaseModel):
     affected_tasks_count: int
     impact_score: float  # 0-100
     recommendations: List[str]
-    period_start: datetime
-    period_end: datetime
+    stage_breakdown: Dict  # Dictionary with stage details
+    period_start: str  # ISO format datetime string
+    period_end: str  # ISO format datetime string

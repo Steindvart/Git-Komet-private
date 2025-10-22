@@ -147,8 +147,8 @@ class TeamEffectivenessService:
             "has_alert": has_alert,
             "alert_message": alert_message,
             "alert_severity": alert_severity,
-            "period_start": period_start,
-            "period_end": period_end,
+            "period_start": period_start.isoformat(),
+            "period_end": period_end.isoformat(),
         }
 
     @staticmethod

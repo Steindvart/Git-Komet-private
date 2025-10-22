@@ -45,8 +45,8 @@ class TechnicalDebtService:
                 "churn_rate": 0,
                 "technical_debt_score": 50,
                 "recommendations": ["Нет данных за указанный период"],
-                "period_start": period_start,
-                "period_end": period_end,
+                "period_start": period_start.isoformat(),
+                "period_end": period_end.isoformat(),
             }
         
         # 1. Test Coverage Analysis
@@ -187,8 +187,8 @@ class TechnicalDebtService:
             "churn_rate": round(churn_rate, 2),
             "technical_debt_score": round(technical_debt_score, 2),
             "recommendations": recommendations,
-            "period_start": period_start,
-            "period_end": period_end,
+            "period_start": period_start.isoformat(),
+            "period_end": period_end.isoformat(),
         }
 
     @staticmethod
