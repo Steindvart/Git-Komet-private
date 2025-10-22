@@ -170,13 +170,48 @@ class TeamEffectivenessMetrics(BaseModel):
     period_end: datetime
 
 
+class ProjectEffectivenessMetrics(BaseModel):
+    """Метрики эффективности проекта / Project effectiveness metrics"""
+    project_id: int
+    project_name: str
+    effectiveness_score: float  # 0-100
+    trend: str  # improving, stable, declining
+    total_commits: int
+    total_prs: int
+    avg_pr_review_time: float
+    active_contributors: int
+    after_hours_percentage: float
+    weekend_percentage: float
+    churn_rate: float
+    has_alert: bool
+    alert_message: Optional[str] = None
+    alert_severity: Optional[str] = None
+    period_start: datetime
+    period_end: datetime
+
+
+class EmployeeCareMetrics(BaseModel):
+    """Метрика заботы о сотрудниках / Employee care metrics"""
+    project_id: int
+    project_name: str
+    employee_care_score: float  # 0-100, higher is better
+    after_hours_percentage: float
+    weekend_percentage: float
+    status: str  # excellent, good, needs_attention, critical
+    recommendations: List[str]
+    period_start: datetime
+    period_end: datetime
+
+
 class TechnicalDebtAnalysis(BaseModel):
     team_id: Optional[int] = None
     project_id: Optional[int] = None
     test_coverage: float
     test_coverage_trend: str
     todo_count: int
+    todo_in_reviews: Optional[int] = None
     todo_trend: str
+    churn_rate: Optional[float] = None
     review_comment_density: float
     technical_debt_score: float  # 0-100, lower is better
     recommendations: List[str]
@@ -185,11 +220,13 @@ class TechnicalDebtAnalysis(BaseModel):
 
 
 class BottleneckAnalysis(BaseModel):
-    team_id: int
-    bottleneck_stage: str  # review, development, testing
+    team_id: Optional[int] = None
+    project_id: Optional[int] = None
+    bottleneck_stage: str  # review, development, testing, todo, none
     avg_time_in_stage: float  # hours
     affected_tasks_count: int
     impact_score: float  # 0-100
     recommendations: List[str]
+    stage_times: Optional[dict] = None
     period_start: datetime
     period_end: datetime

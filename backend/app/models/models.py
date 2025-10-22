@@ -5,7 +5,7 @@ from app.db.session import Base
 
 
 class Project(Base):
-    """Project - represents a Git repository"""
+    """Проект - представляет Git-репозиторий / Project - represents a Git repository"""
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -16,8 +16,11 @@ class Project(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
+    members = relationship("TeamMember", back_populates="project", cascade="all, delete-orphan")
     pull_requests = relationship("PullRequest", back_populates="project", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
+    project_metrics = relationship("ProjectMetric", back_populates="project", cascade="all, delete-orphan")
+    technical_debt_metrics = relationship("TechnicalDebtMetric", back_populates="project", cascade="all, delete-orphan")
 
 
 class Team(Base):
@@ -34,10 +37,12 @@ class Team(Base):
 
 
 class TeamMember(Base):
+    """Участник проекта / Project member"""
     __tablename__ = "team_members"
 
     id = Column(Integer, primary_key=True, index=True)
-    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)  # Сделано nullable для совместимости
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)  # Новая связь с проектом
     external_id = Column(String, index=True, nullable=True)  # External user ID
     email = Column(String, nullable=False)
     name = Column(String, nullable=False)
@@ -46,6 +51,7 @@ class TeamMember(Base):
     
     # Relationships
     team = relationship("Team", back_populates="members")
+    project = relationship("Project", back_populates="members")
     commits = relationship("Commit", back_populates="author")
     pull_requests = relationship("PullRequest", foreign_keys="PullRequest.author_id", back_populates="author")
     reviews = relationship("CodeReview", back_populates="reviewer")
@@ -161,7 +167,7 @@ class Task(Base):
 
 
 class TeamMetric(Base):
-    """Calculated team effectiveness metrics"""
+    """Calculated team effectiveness metrics (deprecated - use ProjectMetric)"""
     __tablename__ = "team_metrics"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -183,13 +189,36 @@ class TeamMetric(Base):
     team = relationship("Team", back_populates="team_metrics")
 
 
+class ProjectMetric(Base):
+    """Рассчитанные метрики эффективности проекта / Calculated project effectiveness metrics"""
+    __tablename__ = "project_metrics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    metric_type = Column(String, nullable=False)  # effectiveness_score, technical_debt, bottleneck, employee_care, etc.
+    metric_value = Column(Text, nullable=False)  # JSON string for complex values
+    score = Column(Float, nullable=True)  # Normalized score 0-100
+    trend = Column(String, nullable=True)  # improving, stable, declining
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    calculated_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Alert data
+    has_alert = Column(Boolean, default=False)
+    alert_message = Column(String, nullable=True)
+    alert_severity = Column(String, nullable=True)  # info, warning, critical
+    
+    # Relationships
+    project = relationship("Project", back_populates="project_metrics")
+
+
 class TechnicalDebtMetric(Base):
-    """Technical debt tracking over time"""
+    """Отслеживание технического долга / Technical debt tracking over time"""
     __tablename__ = "technical_debt_metrics"
 
     id = Column(Integer, primary_key=True, index=True)
-    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)  # Deprecated
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     
     # Metrics
     test_coverage = Column(Float, nullable=True)  # Percentage
@@ -201,3 +230,6 @@ class TechnicalDebtMetric(Base):
     measured_at = Column(DateTime, nullable=False)
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
+    
+    # Relationships
+    project = relationship("Project", back_populates="technical_debt_metrics")
