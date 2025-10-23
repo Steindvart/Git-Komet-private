@@ -555,7 +555,8 @@ const formatStageTime = (hours: number) => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 1rem;
   background-color: rgba(210, 153, 34, 0.15);
   border-radius: 0.375rem;
   border: 1px solid rgba(210, 153, 34, 0.3);
