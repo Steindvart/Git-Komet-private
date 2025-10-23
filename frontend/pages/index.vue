@@ -2,13 +2,13 @@
   <div>
     <h1>Панель управления Git-Komet</h1>
     <p class="subtitle">Умный трекер разработки через анализ Git-метрик</p>
-    
+
     <!-- Project Selector -->
     <div class="project-selector">
       <label for="project-select">Выберите проект для анализа:</label>
-      <select 
-        id="project-select" 
-        v-model="selectedProjectId" 
+      <select
+        id="project-select"
+        v-model="selectedProjectId"
         @change="onProjectChange"
         :disabled="loading"
       >
@@ -18,7 +18,7 @@
         </option>
       </select>
     </div>
-    
+
     <div class="dashboard-grid">
       <div class="card stats-card" v-if="selectedProjectId && projectMetrics">
         <h3>🎯 Статистика проекта</h3>
@@ -45,7 +45,7 @@
           {{ projectMetrics.alert_message }}
         </div>
       </div>
-      
+
       <div class="card stats-card" v-else-if="!selectedProjectId">
         <h3>🎯 Начните работу</h3>
         <p>Выберите проект из списка выше для просмотра статистики и метрик</p>
@@ -55,10 +55,10 @@
       <div class="card actions-card">
         <h3>🚀 Быстрые действия</h3>
         <div class="actions">
-          <NuxtLink to="/repositories" class="btn btn-primary">
+          <NuxtLink to="/repositories" class="btn btn-secondary">
             Управление проектами
           </NuxtLink>
-          <NuxtLink :to="`/metrics?project=${selectedProjectId}`" class="btn btn-secondary" v-if="selectedProjectId">
+          <NuxtLink :to="`/metrics?project=${selectedProjectId}`" class="btn btn-primary" v-if="selectedProjectId">
             Детальная аналитика
           </NuxtLink>
         </div>
@@ -138,7 +138,7 @@ const onProjectChange = async () => {
 
 const loadProjectMetrics = async () => {
   if (!selectedProjectId.value) return
-  
+
   loading.value = true
   try {
     projectMetrics.value = await api.fetchProjectMetrics(selectedProjectId.value)
