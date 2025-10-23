@@ -282,3 +282,123 @@ class TestProjectBottleneckService:
         assert result["bottleneck_stage"] == "none"
         assert result["avg_time_in_stage"] == 0.0
         assert result["affected_tasks_count"] == 0
+    
+    def test_get_prs_needing_attention(self, db_session, sample_project):
+        """Тест получения списка PR/MR, требующих внимания."""
+        # Создать открытые PR с разным временем на ревью
+        base_date = datetime.utcnow()
+        
+        # PR1: 120 часов на ревью (5 дней) - должен быть в списке
+        pr1 = PullRequest(
+            external_id="pr-attention-1",
+            project_id=sample_project.id,
+            author_id=1,
+            title="Старый PR требует внимания",
+            state="open",
+            created_at=base_date - timedelta(hours=120),
+            updated_at=base_date - timedelta(hours=120)
+        )
+        db_session.add(pr1)
+        db_session.flush()
+        
+        # Добавить ревью к PR1
+        review1 = CodeReview(
+            pull_request_id=pr1.id,
+            reviewer_id=1,
+            state="changes_requested",
+            created_at=base_date - timedelta(hours=118),
+            comments_count=5
+        )
+        db_session.add(review1)
+        
+        # PR2: 50 часов на ревью (2 дня) - не должен быть в списке при min_hours=96
+        pr2 = PullRequest(
+            external_id="pr-attention-2",
+            project_id=sample_project.id,
+            author_id=1,
+            title="Относительно свежий PR",
+            state="open",
+            created_at=base_date - timedelta(hours=50),
+            updated_at=base_date - timedelta(hours=50)
+        )
+        db_session.add(pr2)
+        
+        # PR3: 10 часов на ревью - не должен быть в списке
+        pr3 = PullRequest(
+            external_id="pr-attention-3",
+            project_id=sample_project.id,
+            author_id=1,
+            title="Свежий PR",
+            state="open",
+            created_at=base_date - timedelta(hours=10),
+            updated_at=base_date - timedelta(hours=10)
+        )
+        db_session.add(pr3)
+        
+        # PR4: закрытый PR - не должен быть в списке
+        pr4 = PullRequest(
+            external_id="pr-attention-4",
+            project_id=sample_project.id,
+            author_id=1,
+            title="Закрытый PR",
+            state="merged",
+            created_at=base_date - timedelta(hours=200),
+            updated_at=base_date - timedelta(hours=1),
+            merged_at=base_date - timedelta(hours=1)
+        )
+        db_session.add(pr4)
+        
+        db_session.commit()
+        
+        # Тест 1: Получить PR с min_hours=96
+        result = ProjectBottleneckService.get_prs_needing_attention(
+            db_session, sample_project.id, min_hours_in_review=96.0, limit=5
+        )
+        
+        assert result is not None
+        assert len(result) == 1
+        assert result[0]["title"] == "Старый PR требует внимания"
+        assert result[0]["indicator"] == "🌩️"  # > 96 часов
+        assert result[0]["time_in_review_hours"] > 96
+        
+        # Тест 2: Получить все открытые PR с min_hours=0
+        result_all = ProjectBottleneckService.get_prs_needing_attention(
+            db_session, sample_project.id, min_hours_in_review=0, limit=10
+        )
+        
+        assert result_all is not None
+        assert len(result_all) == 3  # pr1, pr2, pr3 (pr4 закрыт)
+        
+        # Проверить сортировку - самый долгий PR должен быть первым
+        assert result_all[0]["title"] == "Старый PR требует внимания"
+        
+        # Тест 3: Проверить визуальные индикаторы
+        indicators = [pr["indicator"] for pr in result_all]
+        assert "🌩️" in indicators  # > 96 часов
+        assert "🌧️" in indicators  # 24-96 часов
+        assert "☀️" in indicators  # < 24 часов
+    
+    def test_get_prs_needing_attention_empty(self, db_session):
+        """Тест для проекта без PR."""
+        project = Project(
+            external_id="empty-pr-project",
+            name="Project without PRs",
+            description="Project with no PRs"
+        )
+        db_session.add(project)
+        db_session.commit()
+        
+        result = ProjectBottleneckService.get_prs_needing_attention(
+            db_session, project.id, min_hours_in_review=96.0, limit=5
+        )
+        
+        assert result is not None
+        assert len(result) == 0
+    
+    def test_get_prs_needing_attention_nonexistent_project(self, db_session):
+        """Тест для несуществующего проекта."""
+        result = ProjectBottleneckService.get_prs_needing_attention(
+            db_session, 999999, min_hours_in_review=96.0, limit=5
+        )
+        
+        assert result is None

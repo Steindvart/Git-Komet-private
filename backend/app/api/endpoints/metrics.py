@@ -6,7 +6,8 @@ from app.schemas.schemas import (
     ProjectEffectivenessMetrics,
     EmployeeCareMetrics,
     TechnicalDebtAnalysis,
-    BottleneckAnalysis
+    BottleneckAnalysis,
+    PRsNeedingAttentionResponse
 )
 from app.services.project_effectiveness_service import ProjectEffectivenessService
 from app.services.project_technical_debt_service import ProjectTechnicalDebtService
@@ -166,4 +167,35 @@ def get_project_bottlenecks(
         raise HTTPException(status_code=404, detail="Project not found")
     
     return analysis
+
+
+@router.get("/project/{project_id}/prs-needing-attention", response_model=PRsNeedingAttentionResponse)
+def get_prs_needing_attention(
+    project_id: int,
+    min_hours: float = Query(default=96.0, ge=0, description="Минимальное количество часов на ревью"),
+    limit: int = Query(default=5, ge=1, le=20, description="Максимальное количество PR для возврата"),
+    db: Session = Depends(get_db)
+):
+    """
+    Получить список PR/MR, которые требуют внимания (долго находятся на ревью).
+    Get list of PR/MRs that need attention (long time in review).
+    
+    Этот endpoint возвращает PR/MR, которые находятся на ревью более указанного количества часов.
+    По умолчанию возвращает PR/MR на ревью более 96 часов (4 дней).
+    """
+    prs = ProjectBottleneckService.get_prs_needing_attention(
+        db=db,
+        project_id=project_id,
+        min_hours_in_review=min_hours,
+        limit=limit
+    )
+    
+    if prs is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    return {
+        "project_id": project_id,
+        "prs": prs,
+        "total_count": len(prs)
+    }
 

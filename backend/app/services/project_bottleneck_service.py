@@ -2,10 +2,10 @@
 Сервис для анализа узких мест в работе над проектом.
 Service for analyzing project workflow bottlenecks.
 """
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.models.models import Project, Task
+from app.models.models import Project, Task, PullRequest, CodeReview
 
 
 class ProjectBottleneckService:
@@ -136,3 +136,81 @@ class ProjectBottleneckService:
             "period_start": period_start,
             "period_end": period_end,
         }
+    
+    @staticmethod
+    def get_prs_needing_attention(
+        db: Session,
+        project_id: int,
+        min_hours_in_review: float = 96.0,
+        limit: int = 5
+    ) -> Optional[List[Dict]]:
+        """
+        Получить список PR/MR, которые требуют внимания (долго находятся на ревью).
+        Get list of PR/MRs that need attention (long time in review).
+        
+        Args:
+            db: Database session
+            project_id: ID проекта
+            min_hours_in_review: Минимальное количество часов на ревью для фильтрации
+            limit: Максимальное количество PR для возврата
+            
+        Returns:
+            Список PR/MR с информацией о времени в ревью или None если проект не найден
+        """
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            return None
+        
+        # Получить все открытые PR проекта
+        open_prs = db.query(PullRequest).filter(
+            PullRequest.project_id == project_id,
+            PullRequest.state == "open"
+        ).all()
+        
+        if not open_prs:
+            return []
+        
+        pr_list = []
+        now = datetime.utcnow()
+        
+        for pr in open_prs:
+            # Найти первое ревью для PR
+            first_review = db.query(CodeReview).filter(
+                CodeReview.pull_request_id == pr.id
+            ).order_by(CodeReview.created_at.asc()).first()
+            
+            # Если есть хотя бы одно ревью, считаем время с первого ревью
+            # Иначе считаем время с момента создания PR
+            if first_review:
+                time_in_review_hours = (now - first_review.created_at).total_seconds() / 3600
+            else:
+                # PR создан, но ещё не получил ревью - считаем с момента создания
+                time_in_review_hours = (now - pr.created_at).total_seconds() / 3600
+            
+            # Определить визуальный индикатор
+            if time_in_review_hours < 24:
+                indicator = "☀️"  # Меньше суток
+            elif time_in_review_hours < 96:
+                indicator = "🌧️"  # От 1 до 4 дней
+            else:
+                indicator = "🌩️"  # Больше 4 дней
+            
+            # Фильтровать только PR, которые на ревью больше min_hours_in_review
+            if time_in_review_hours >= min_hours_in_review:
+                pr_list.append({
+                    "pr_id": pr.id,
+                    "external_id": pr.external_id,
+                    "title": pr.title,
+                    "author_id": pr.author_id,
+                    "created_at": pr.created_at,
+                    "time_in_review_hours": round(time_in_review_hours, 1),
+                    "indicator": indicator,
+                    "has_reviews": first_review is not None,
+                    "review_cycles": pr.review_cycles
+                })
+        
+        # Отсортировать по времени в ревью (убывание), затем по времени создания (убывание)
+        pr_list.sort(key=lambda x: (-x["time_in_review_hours"], -x["created_at"].timestamp()))
+        
+        # Вернуть только первые limit записей
+        return pr_list[:limit]
