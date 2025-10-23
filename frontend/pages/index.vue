@@ -21,7 +21,7 @@
 
     <div class="dashboard-grid">
       <div class="card stats-card" v-if="selectedProjectId && projectMetrics">
-        <h3>🎯 Статистика проекта</h3>
+        <h3>🎯 Показатели проекта</h3>
         <div class="stats">
           <div class="stat-item">
             <span class="stat-label">Эффективность</span>
@@ -44,7 +44,7 @@
           <strong>{{ projectMetrics.alert_severity === 'critical' ? '🚨' : '⚠️' }}</strong>
           {{ projectMetrics.alert_message }}
         </div>
-        
+
         <!-- Critical PRs Table (only 🌩️ status) -->
         <div v-if="criticalPRs.length > 0" class="critical-prs">
           <h4>⤵️ Запросы, требующие внимания</h4>
@@ -166,7 +166,7 @@ const loadProjectMetrics = async () => {
   loading.value = true
   try {
     projectMetrics.value = await api.fetchProjectMetrics(selectedProjectId.value)
-    
+
     // Load PRs and filter only critical ones (🌩️ - more than 96 hours)
     const prsData = await api.fetchPRsNeedingAttention(selectedProjectId.value, 96, 10)
     criticalPRs.value = (prsData.prs || []).filter((pr: any) => pr.indicator === '🌩️')
