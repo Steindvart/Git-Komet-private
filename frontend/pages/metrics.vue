@@ -31,8 +31,8 @@
       <!-- Bottleneck Analysis -->
       <div class="card">
         <h3>🚧 Анализ узких мест</h3>
-        <p>Этап с самым долгим средним временем:</p>
         <div class="bottleneck-info" v-if="bottleneckStage !== 'none'">
+          <span class="bottleneck-label">Этап с самым долгим средним временем:</span>
           <div class="bottleneck-stage">
             <span class="stage-icon">🔍</span>
             <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }} → ~{{ bottleneckTime.toFixed(1) }}ч</span>
@@ -539,6 +539,16 @@ const formatStageTime = (hours: number) => {
 
 .bottleneck-info {
   margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bottleneck-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .bottleneck-stage {
@@ -548,7 +558,6 @@ const formatStageTime = (hours: number) => {
   padding: 0.75rem;
   background-color: rgba(210, 153, 34, 0.15);
   border-radius: 0.375rem;
-  margin-bottom: 1rem;
   border: 1px solid rgba(210, 153, 34, 0.3);
 }
 
