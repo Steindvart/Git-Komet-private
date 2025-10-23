@@ -20,7 +20,7 @@
     </div>
     
     <div class="dashboard-grid">
-      <div class="card full-width" v-if="selectedProjectId && projectMetrics">
+      <div class="card stats-card" v-if="selectedProjectId && projectMetrics">
         <h3>🎯 Статистика проекта</h3>
         <div class="stats">
           <div class="stat-item">
@@ -46,10 +46,22 @@
         </div>
       </div>
       
-      <div class="card full-width" v-else-if="!selectedProjectId">
+      <div class="card stats-card" v-else-if="!selectedProjectId">
         <h3>🎯 Начните работу</h3>
         <p>Выберите проект из списка выше для просмотра статистики и метрик</p>
         <p style="margin-top: 1rem; color: var(--text-secondary);">Всего проектов: {{ projects.length }}</p>
+      </div>
+
+      <div class="card actions-card">
+        <h3>🚀 Быстрые действия</h3>
+        <div class="actions">
+          <NuxtLink to="/repositories" class="btn btn-primary">
+            Управление проектами
+          </NuxtLink>
+          <NuxtLink :to="`/metrics?project=${selectedProjectId}`" class="btn btn-secondary" v-if="selectedProjectId">
+            Детальная аналитика
+          </NuxtLink>
+        </div>
       </div>
 
       <div class="card full-width">
@@ -83,18 +95,6 @@
               <p>Отслеживание переработок и активности вне рабочего времени</p>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>🚀 Быстрые действия</h3>
-        <div class="actions">
-          <NuxtLink to="/repositories" class="btn btn-primary">
-            Управление проектами
-          </NuxtLink>
-          <NuxtLink :to="`/metrics?project=${selectedProjectId}`" class="btn btn-secondary" v-if="selectedProjectId">
-            Детальная аналитика
-          </NuxtLink>
         </div>
       </div>
     </div>
@@ -223,13 +223,21 @@ const loadProjectMetrics = async () => {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 2fr 1fr;
   gap: 1.5rem;
   margin-top: 2rem;
 }
 
 .full-width {
   grid-column: 1 / -1;
+}
+
+.stats-card {
+  grid-column: 1;
+}
+
+.actions-card {
+  grid-column: 2;
 }
 
 .stats {
@@ -277,8 +285,8 @@ const loadProjectMetrics = async () => {
 
 
 .analysis-types {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-top: 1rem;
 }
