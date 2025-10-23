@@ -35,7 +35,7 @@
         <div class="bottleneck-info" v-if="bottleneckStage !== 'none'">
           <div class="bottleneck-stage">
             <span class="stage-icon">🔍</span>
-            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }} ~{{ bottleneckTime.toFixed(1) }} часов</span>
+            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }} → ~{{ bottleneckTime.toFixed(1) }}ч</span>
           </div>
         </div>
         <div v-else class="bottleneck-info">
