@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional, List
 
 
-# Project Schemas (replaces Repository)
+# Project Schemas
 class ProjectBase(BaseModel):
     name: str
     external_id: str
@@ -15,6 +15,28 @@ class ProjectCreate(ProjectBase):
 
 
 class Project(ProjectBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# Repository Schemas
+class RepositoryBase(BaseModel):
+    name: str
+    external_id: str
+    project_id: int
+    description: Optional[str] = None
+    url: Optional[str] = None
+
+
+class RepositoryCreate(RepositoryBase):
+    pass
+
+
+class Repository(RepositoryBase):
     id: int
     created_at: datetime
     updated_at: datetime
@@ -69,7 +91,7 @@ class Commit(CommitBase):
 # Pull Request Schemas
 class PullRequestBase(BaseModel):
     external_id: str
-    project_id: int
+    repository_id: int
     title: str
     description: Optional[str] = None
     state: str
@@ -113,7 +135,7 @@ class CodeReview(CodeReviewBase):
 # Task Schemas
 class TaskBase(BaseModel):
     external_id: str
-    project_id: int
+    repository_id: int
     title: str
     description: Optional[str] = None
     state: str
@@ -135,15 +157,13 @@ class Task(TaskBase):
         from_attributes = True
 
 
-# Analysis Response Schemas
-class ProjectEffectivenessMetrics(BaseModel):
+# Analysis Response Schemas - Repository Level
+class RepositoryEffectivenessMetrics(BaseModel):
     """
-    Метрики эффективности проекта / Project effectiveness metrics.
-    
-    Новое ТЗ: Метрики основаны только на данных коммитов.
+    Метрики эффективности репозитория / Repository effectiveness metrics.
     """
-    project_id: int
-    project_name: str
+    repository_id: int
+    repository_name: str
     effectiveness_score: float  # 0-100
     trend: str  # improving, stable, declining
     total_commits: int
@@ -158,10 +178,29 @@ class ProjectEffectivenessMetrics(BaseModel):
     period_end: datetime
 
 
-class EmployeeCareMetrics(BaseModel):
-    """Метрика заботы о сотрудниках / Employee care metrics"""
+# Analysis Response Schemas - Project Level (Aggregated)
+class ProjectEffectivenessMetrics(BaseModel):
+    """
+    Метрики эффективности проекта / Project effectiveness metrics (aggregated from repositories).
+    """
     project_id: int
     project_name: str
+    repository_count: int
+    avg_effectiveness_score: float  # 0-100
+    avg_technical_debt: float  # 0-100
+    total_active_contributors: int
+    trend: str  # improving, stable, declining
+    has_alert: bool
+    alert_message: Optional[str] = None
+    alert_severity: Optional[str] = None
+    period_start: datetime
+    period_end: datetime
+
+
+class EmployeeCareMetrics(BaseModel):
+    """Метрика заботы о сотрудниках / Employee care metrics (repository level)"""
+    repository_id: int
+    repository_name: str
     employee_care_score: float  # 0-100, higher is better
     after_hours_percentage: float
     weekend_percentage: float
@@ -173,13 +212,13 @@ class EmployeeCareMetrics(BaseModel):
 
 class ActiveContributorsMetrics(BaseModel):
     """
-    Метрика активных участников / Active contributors metrics.
+    Метрика активных участников / Active contributors metrics (repository level).
     
-    Новое ТЗ: Анализ активных участников - количество уникальных авторов коммитов
+    Анализ активных участников - количество уникальных авторов коммитов
     за период, чтобы понимать сколько человеческих ресурсов тратится на проект.
     """
-    project_id: int
-    project_name: str
+    repository_id: int
+    repository_name: str
     active_contributors: int
     total_commits: int
     avg_commits_per_contributor: float
@@ -199,12 +238,12 @@ class ContributorCommitStats(BaseModel):
 
 class CommitsPerPersonMetrics(BaseModel):
     """
-    Метрика коммитов на человека / Commits per person metrics.
+    Метрика коммитов на человека / Commits per person metrics (repository level).
     
-    Новое ТЗ: Количество коммитов на участника для понимания уровня экспертности по проекту.
+    Количество коммитов на участника для понимания уровня экспертности по репозиторию.
     """
-    project_id: int
-    project_name: str
+    repository_id: int
+    repository_name: str
     contributors: List[ContributorCommitStats]
     total_contributors: int
     period_start: datetime
@@ -213,12 +252,12 @@ class CommitsPerPersonMetrics(BaseModel):
 
 class TechnicalDebtAnalysis(BaseModel):
     """
-    Анализ технического долга на основе TODO комментариев.
+    Анализ технического долга на основе TODO комментариев (repository level).
     Technical debt analysis based on TODO comments only.
     
-    Новое ТЗ: Анализируются ТОЛЬКО TODO комментарии из diff коммитов.
+    Анализируются ТОЛЬКО TODO комментарии из diff коммитов.
     """
-    project_id: int
+    repository_id: int
     todo_count: int
     todo_trend: str  # up, down, stable
     technical_debt_score: float  # 0-100, lower is better
@@ -228,8 +267,7 @@ class TechnicalDebtAnalysis(BaseModel):
 
 
 class BottleneckAnalysis(BaseModel):
-    team_id: Optional[int] = None
-    project_id: Optional[int] = None
+    repository_id: Optional[int] = None
     bottleneck_stage: str  # review, development, testing, todo, none
     avg_time_in_stage: float  # hours
     affected_tasks_count: int
@@ -255,6 +293,6 @@ class PRNeedingAttention(BaseModel):
 
 class PRsNeedingAttentionResponse(BaseModel):
     """Ответ со списком PR/MR, требующих внимания / Response with list of PRs needing attention"""
-    project_id: int
+    repository_id: int
     prs: List[PRNeedingAttention]
     total_count: int
