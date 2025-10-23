@@ -141,7 +141,7 @@ class ProjectBottleneckService:
     def get_prs_needing_attention(
         db: Session,
         project_id: int,
-        min_hours_in_review: float = 96.0,
+        min_hours_in_review: float = 0.0,
         limit: int = 5
     ) -> Optional[List[Dict]]:
         """
@@ -151,7 +151,7 @@ class ProjectBottleneckService:
         Args:
             db: Database session
             project_id: ID проекта
-            min_hours_in_review: Минимальное количество часов на ревью для фильтрации
+            min_hours_in_review: Минимальное количество часов на ревью для фильтрации (0 = все PR)
             limit: Максимальное количество PR для возврата
             
         Returns:

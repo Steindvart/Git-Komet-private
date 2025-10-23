@@ -172,16 +172,16 @@ def get_project_bottlenecks(
 @router.get("/project/{project_id}/prs-needing-attention", response_model=PRsNeedingAttentionResponse)
 def get_prs_needing_attention(
     project_id: int,
-    min_hours: float = Query(default=96.0, ge=0, description="Минимальное количество часов на ревью"),
+    min_hours: float = Query(default=0.0, ge=0, description="Минимальное количество часов на ревью (0 = все PR)"),
     limit: int = Query(default=5, ge=1, le=20, description="Максимальное количество PR для возврата"),
     db: Session = Depends(get_db)
 ):
     """
-    Получить список PR/MR, которые требуют внимания (долго находятся на ревью).
-    Get list of PR/MRs that need attention (long time in review).
+    Получить список PR/MR (запросов).
+    Get list of PR/MRs (requests).
     
-    Этот endpoint возвращает PR/MR, которые находятся на ревью более указанного количества часов.
-    По умолчанию возвращает PR/MR на ревью более 96 часов (4 дней).
+    Этот endpoint возвращает PR/MR, отсортированные по времени нахождения на ревью.
+    По умолчанию возвращает все открытые PR/MR (min_hours=0).
     """
     prs = ProjectBottleneckService.get_prs_needing_attention(
         db=db,

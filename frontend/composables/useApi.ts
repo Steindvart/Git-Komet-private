@@ -108,7 +108,7 @@ export const useApi = () => {
     }
   }
 
-  const fetchPRsNeedingAttention = async (projectId: number, minHours: number = 96, limit: number = 5) => {
+  const fetchPRsNeedingAttention = async (projectId: number, minHours: number = 0, limit: number = 5) => {
     try {
       const response = await fetch(
         `${apiBase}/metrics/project/${projectId}/prs-needing-attention?min_hours=${minHours}&limit=${limit}`

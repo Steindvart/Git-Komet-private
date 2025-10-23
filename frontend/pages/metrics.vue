@@ -112,16 +112,16 @@
 
         <!-- PR/MR Needing Attention Table -->
         <div class="prs-needing-attention">
-          <h4>🚨 PR/MR, требующие внимания (на ревью более 96 часов)</h4>
+          <h4>⤵️ Запросы</h4>
           <div v-if="prsNeedingAttention.length === 0" class="empty-prs">
-            <p>✓ Нет PR/MR, которые долго находятся на ревью</p>
+            <p>✓ Нет открытых запросов на ревью</p>
           </div>
           <div v-else class="prs-table">
             <table>
               <thead>
                 <tr>
-                  <th>Индикатор</th>
-                  <th>Название PR/MR</th>
+                  <th></th>
+                  <th>Название</th>
                   <th>Время на ревью (часов)</th>
                   <th>Циклы ревью</th>
                 </tr>
@@ -135,7 +135,7 @@
                 </tr>
               </tbody>
             </table>
-            <p class="prs-note">Показаны первые {{ prsNeedingAttention.length }} из {{ totalPRsNeedingAttention }} PR/MR в порядке убывания по времени на ревью</p>
+            <p class="prs-note">Показаны первые {{ prsNeedingAttention.length }} из {{ totalPRsNeedingAttention }} запросов в порядке убывания по времени на ревью</p>
           </div>
         </div>
       </div>
@@ -323,8 +323,8 @@ const loadAllMetrics = async () => {
       testing: 0
     }
 
-    // Load PRs needing attention
-    const prsData = await api.fetchPRsNeedingAttention(selectedProjectId.value, 96, 5)
+    // Load PRs needing attention (all PRs, min_hours=0)
+    const prsData = await api.fetchPRsNeedingAttention(selectedProjectId.value, 0, 5)
     prsNeedingAttention.value = prsData.prs || []
     totalPRsNeedingAttention.value = prsData.total_count || 0
 
