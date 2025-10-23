@@ -28,8 +28,67 @@
     </div>
 
     <div v-else class="metrics-container">
+      <!-- Bottleneck Analysis -->
+      <div class="card">
+        <h3>🚧 Анализ узких мест</h3>
+        <p>Этап с самым долгим средним временем:</p>
+        <div class="bottleneck-info" v-if="bottleneckStage !== 'none'">
+          <div class="bottleneck-stage">
+            <span class="stage-icon">🔍</span>
+            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }}</span>
+          </div>
+          <div class="bottleneck-stats">
+            <div class="stat">
+              <span class="stat-label">Среднее время:</span>
+              <span class="stat-value">{{ bottleneckTime.toFixed(1) }} часов</span>
+            </div>
+          </div>
+        </div>
+        <div v-else class="bottleneck-info">
+          <p>✓ Нет явных узких мест в workflow</p>
+        </div>
+        <div class="stage-breakdown">
+          <h4>Распределение по этапам:</h4>
+          <div class="stage-item">
+            <span class="stage-label">📋 TODO</span>
+            <div class="stage-bar">
+              <div class="bar-fill" style="width: 20%"></div>
+            </div>
+            <span class="stage-time">12ч</span>
+          </div>
+          <div class="stage-item">
+            <span class="stage-label">💻 Разработка</span>
+            <div class="stage-bar">
+              <div class="bar-fill" style="width: 45%"></div>
+            </div>
+            <span class="stage-time">28ч</span>
+          </div>
+          <div class="stage-item">
+            <span class="stage-label">👁️ Ревью</span>
+            <div class="stage-bar">
+              <div class="bar-fill warning" style="width: 80%"></div>
+            </div>
+            <span class="stage-time">48ч</span>
+          </div>
+          <div class="stage-item">
+            <span class="stage-label">🧪 Тестирование</span>
+            <div class="stage-bar">
+              <div class="bar-fill" style="width: 25%"></div>
+            </div>
+            <span class="stage-time">15ч</span>
+          </div>
+        </div>
+        <div class="recommendations">
+          <h4>💡 Рекомендации</h4>
+          <ul>
+            <li>⚠️ Ревью кода занимает более 2 дней в среднем</li>
+            <li>Рассмотрите: увеличение мощности ревьюеров или установку SLA для ревью</li>
+          </ul>
+        </div>
+      </div>
+
       <!-- Team Effectiveness Score -->
-      <div class="card full-width">
+      <div class="card">
         <h3>📊 Оценка эффективности команды</h3>
         <p>Общий показатель производительности команды</p>
         <div class="score-display">
@@ -123,67 +182,8 @@
         </div>
       </div>
 
-      <!-- Bottleneck Analysis -->
-      <div class="card">
-        <h3>🚧 Анализ узких мест</h3>
-        <p>Этап с самым долгим средним временем:</p>
-        <div class="bottleneck-info" v-if="bottleneckStage !== 'none'">
-          <div class="bottleneck-stage">
-            <span class="stage-icon">🔍</span>
-            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }}</span>
-          </div>
-          <div class="bottleneck-stats">
-            <div class="stat">
-              <span class="stat-label">Среднее время:</span>
-              <span class="stat-value">{{ bottleneckTime.toFixed(1) }} часов</span>
-            </div>
-          </div>
-        </div>
-        <div v-else class="bottleneck-info">
-          <p>✓ Нет явных узких мест в workflow</p>
-        </div>
-        <div class="stage-breakdown">
-          <h4>Распределение по этапам:</h4>
-          <div class="stage-item">
-            <span class="stage-label">📋 TODO</span>
-            <div class="stage-bar">
-              <div class="bar-fill" style="width: 20%"></div>
-            </div>
-            <span class="stage-time">12ч</span>
-          </div>
-          <div class="stage-item">
-            <span class="stage-label">💻 Разработка</span>
-            <div class="stage-bar">
-              <div class="bar-fill" style="width: 45%"></div>
-            </div>
-            <span class="stage-time">28ч</span>
-          </div>
-          <div class="stage-item">
-            <span class="stage-label">👁️ Ревью</span>
-            <div class="stage-bar">
-              <div class="bar-fill warning" style="width: 80%"></div>
-            </div>
-            <span class="stage-time">48ч</span>
-          </div>
-          <div class="stage-item">
-            <span class="stage-label">🧪 Тестирование</span>
-            <div class="stage-bar">
-              <div class="bar-fill" style="width: 25%"></div>
-            </div>
-            <span class="stage-time">15ч</span>
-          </div>
-        </div>
-        <div class="recommendations">
-          <h4>💡 Рекомендации</h4>
-          <ul>
-            <li>⚠️ Ревью кода занимает более 2 дней в среднем</li>
-            <li>Рассмотрите: увеличение мощности ревьюеров или установку SLA для ревью</li>
-          </ul>
-        </div>
-      </div>
-
       <!-- Trend Charts Placeholder -->
-      <div class="card full-width">
+      <div class="card">
         <h3>📈 Тренды во времени</h3>
         <div class="chart-placeholder">
           <p>📊 Визуализация исторических трендов</p>
@@ -312,32 +312,42 @@ const getStageDisplayName = (stage: string) => {
 .project-selector {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background-color: var(--bg-secondary);
-  border-radius: 0.5rem;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-radius: 0.75rem;
   border: 1px solid var(--border-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .project-selector label {
   display: block;
   margin-bottom: 0.75rem;
   font-weight: 600;
+  font-size: 1.125rem;
   color: var(--text-primary);
 }
 
 .project-selector select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 0.375rem;
+  padding: 1rem;
+  border: 2px solid var(--border-primary);
+  border-radius: 0.5rem;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: 1.125rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.project-selector select:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
 }
 
 .project-selector select:focus {
   outline: none;
   border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.2);
 }
 
 .project-selector select:disabled {
@@ -362,13 +372,9 @@ const getStageDisplayName = (stage: string) => {
 }
 
 .metrics-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
-}
-
-.full-width {
-  grid-column: 1 / -1;
 }
 
 .score-display {
