@@ -6,9 +6,9 @@
     <!-- Project Selector -->
     <div class="project-selector">
       <label for="project-select">Проект:</label>
-      <select 
-        id="project-select" 
-        v-model="selectedProjectId" 
+      <select
+        id="project-select"
+        v-model="selectedProjectId"
         @change="onProjectChange"
         :disabled="loading"
       >
@@ -31,7 +31,7 @@
       <!-- Team Effectiveness Score -->
       <div class="card full-width">
         <h3>📊 Оценка эффективности команды</h3>
-        <p>Общий показатель производительности команды (0-100, аналогично SonarQube)</p>
+        <p>Общий показатель производительности команды</p>
         <div class="score-display">
           <div class="score-circle">
             <span class="score-value">{{ effectivenessScore }}</span>
@@ -114,7 +114,7 @@
           </div>
         </div>
         <div class="recommendations">
-          <h4>💡 Рекомендации:</h4>
+          <h4>💡 Рекомендации</h4>
           <ul>
             <li>Покрытие тестами улучшается - продолжайте в том же духе!</li>
             <li>TODO в ревью растут - рассмотрите оформление их в отдельные тикеты</li>
@@ -126,7 +126,7 @@
       <!-- Bottleneck Analysis -->
       <div class="card">
         <h3>🚧 Анализ узких мест</h3>
-        <p>Этап workflow с самым долгим средним временем</p>
+        <p>Этап с самым долгим средним временем:</p>
         <div class="bottleneck-info" v-if="bottleneckStage !== 'none'">
           <div class="bottleneck-stage">
             <span class="stage-icon">🔍</span>
@@ -174,7 +174,7 @@
           </div>
         </div>
         <div class="recommendations">
-          <h4>💡 Рекомендации:</h4>
+          <h4>💡 Рекомендации</h4>
           <ul>
             <li>⚠️ Ревью кода занимает более 2 дней в среднем</li>
             <li>Рассмотрите: увеличение мощности ревьюеров или установку SLA для ревью</li>
@@ -257,7 +257,7 @@ const onProjectChange = async () => {
 
 const loadAllMetrics = async () => {
   if (!selectedProjectId.value) return
-  
+
   loading.value = true
   try {
     // Load effectiveness metrics
@@ -271,19 +271,19 @@ const loadAllMetrics = async () => {
     afterHoursPercentage.value = Math.round(effectiveness.after_hours_percentage)
     weekendPercentage.value = Math.round(effectiveness.weekend_percentage)
     churnRate.value = Math.round(effectiveness.churn_rate)
-    
+
     // Load technical debt
     const debt = await api.fetchProjectTechnicalDebt(selectedProjectId.value)
     todoInCode.value = debt.todo_count
     todoInReviews.value = debt.todo_in_reviews || 0
     reviewCommentDensity.value = debt.review_comment_density
     debtScore.value = Math.round(debt.technical_debt_score)
-    
+
     // Load bottlenecks
     const bottleneck = await api.fetchProjectBottlenecks(selectedProjectId.value)
     bottleneckStage.value = bottleneck.bottleneck_stage
     bottleneckTime.value = bottleneck.avg_time_in_stage
-    
+
   } catch (error) {
     console.error('Error loading metrics:', error)
   } finally {

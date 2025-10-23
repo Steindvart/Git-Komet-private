@@ -22,7 +22,7 @@
       <div v-if="projects.length === 0" class="empty-state">
         <p>Пока нет проектов. Добавьте ваш первый Git-репозиторий!</p>
       </div>
-      
+
       <div v-else class="card-grid">
         <div v-for="project in projects" :key="project.id" class="card">
           <h3>{{ project.name }}</h3>
@@ -51,7 +51,7 @@
             <input v-model="newProject.name" type="text" required :disabled="loading" />
           </div>
           <div class="form-group">
-            <label>Внешний ID (ID проекта)</label>
+            <label>Внешний ID</label>
             <input v-model="newProject.external_id" type="text" required :disabled="loading" />
           </div>
           <div class="form-group">
@@ -133,10 +133,10 @@ const generateMockData = async (id: number) => {
     alert('Сначала создайте команду на странице "Команды"')
     return
   }
-  
+
   const confirmed = confirm('Генерация демо-данных создаст:\n- Коммиты с отслеживанием покрытия тестами\n- Pull Request с временем ревью\n- Ревью кода\n- Задачи с информацией об узких местах\n\nПродолжить?')
   if (!confirmed) return
-  
+
   loading.value = true
   error.value = null
   try {
@@ -152,7 +152,7 @@ const generateMockData = async (id: number) => {
 const deleteProject = async (id: number) => {
   const confirmed = confirm('Вы уверены, что хотите удалить этот проект?')
   if (!confirmed) return
-  
+
   loading.value = true
   error.value = null
   try {
