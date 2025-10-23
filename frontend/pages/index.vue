@@ -24,20 +24,20 @@
         <h3>🎯 Показатели проекта</h3>
         <div class="stats">
           <div class="stat-item">
-            <span class="stat-label">Эффективность</span>
-            <span class="stat-value">{{ projectMetrics.effectiveness_score }}/100</span>
+            <span class="stat-label">Репозиториев</span>
+            <span class="stat-value">{{ projectMetrics.repository_count }}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Коммиты</span>
-            <span class="stat-value">{{ projectMetrics.total_commits }}</span>
+            <span class="stat-label">Средняя эффективность</span>
+            <span class="stat-value">{{ projectMetrics.avg_effectiveness_score }}/100</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Участники</span>
-            <span class="stat-value">{{ projectMetrics.active_contributors }}</span>
+            <span class="stat-label">Активные участники</span>
+            <span class="stat-value">{{ projectMetrics.total_active_contributors }}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Code Churn</span>
-            <span class="stat-value">{{ projectMetrics.churn_rate }}%</span>
+            <span class="stat-label">Технический долг</span>
+            <span class="stat-value">{{ projectMetrics.avg_technical_debt }}/100</span>
           </div>
         </div>
         <div v-if="projectMetrics.has_alert" class="alert" :class="`alert-${projectMetrics.alert_severity}`">

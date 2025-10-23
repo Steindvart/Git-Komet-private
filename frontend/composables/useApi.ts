@@ -47,7 +47,18 @@ export const useApi = () => {
     }
   }
 
-  // Project Metrics API
+  // Repositories API
+  const fetchRepositories = async (projectId: number) => {
+    try {
+      const response = await fetch(`${apiBase}/projects/${projectId}/repositories`)
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching repositories:', error)
+      return []
+    }
+  }
+
+  // Project Metrics API (aggregated from repositories)
   const fetchProjectMetrics = async (projectId: number, periodDays: number = 30) => {
     try {
       const response = await fetch(
@@ -63,10 +74,26 @@ export const useApi = () => {
     }
   }
 
-  const fetchProjectTechnicalDebt = async (projectId: number, periodDays: number = 30) => {
+  // Repository Metrics API
+  const fetchRepositoryMetrics = async (repositoryId: number, periodDays: number = 30) => {
     try {
       const response = await fetch(
-        `${apiBase}/metrics/project/${projectId}/technical-debt?period_days=${periodDays}`
+        `${apiBase}/metrics/repository/${repositoryId}/effectiveness?period_days=${periodDays}`
+      )
+      if (!response.ok) {
+        throw new Error('Failed to fetch repository metrics')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching repository metrics:', error)
+      throw error
+    }
+  }
+
+  const fetchRepositoryTechnicalDebt = async (repositoryId: number, periodDays: number = 30) => {
+    try {
+      const response = await fetch(
+        `${apiBase}/metrics/repository/${repositoryId}/technical-debt?period_days=${periodDays}`
       )
       if (!response.ok) {
         throw new Error('Failed to fetch technical debt')
@@ -78,10 +105,10 @@ export const useApi = () => {
     }
   }
 
-  const fetchProjectBottlenecks = async (projectId: number, periodDays: number = 30) => {
+  const fetchRepositoryBottlenecks = async (repositoryId: number, periodDays: number = 30) => {
     try {
       const response = await fetch(
-        `${apiBase}/metrics/project/${projectId}/bottlenecks?period_days=${periodDays}`
+        `${apiBase}/metrics/repository/${repositoryId}/bottlenecks?period_days=${periodDays}`
       )
       if (!response.ok) {
         throw new Error('Failed to fetch bottlenecks')
@@ -93,10 +120,10 @@ export const useApi = () => {
     }
   }
 
-  const fetchProjectEmployeeCare = async (projectId: number, periodDays: number = 30) => {
+  const fetchRepositoryEmployeeCare = async (repositoryId: number, periodDays: number = 30) => {
     try {
       const response = await fetch(
-        `${apiBase}/metrics/project/${projectId}/employee-care?period_days=${periodDays}`
+        `${apiBase}/metrics/repository/${repositoryId}/employee-care?period_days=${periodDays}`
       )
       if (!response.ok) {
         throw new Error('Failed to fetch employee care metrics')
@@ -108,64 +135,19 @@ export const useApi = () => {
     }
   }
 
-  const fetchPRsNeedingAttention = async (projectId: number, minHours: number = 0, limit: number = 5) => {
-    try {
-      const response = await fetch(
-        `${apiBase}/metrics/project/${projectId}/prs-needing-attention?min_hours=${minHours}&limit=${limit}`
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch PRs needing attention')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Error fetching PRs needing attention:', error)
-      throw error
-    }
-  }
-
-  const fetchActiveContributors = async (projectId: number, periodDays: number = 30) => {
-    try {
-      const response = await fetch(
-        `${apiBase}/metrics/project/${projectId}/active-contributors?period_days=${periodDays}`
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch active contributors')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Error fetching active contributors:', error)
-      throw error
-    }
-  }
-
-  const fetchCommitsPerPerson = async (projectId: number, periodDays: number = 30) => {
-    try {
-      const response = await fetch(
-        `${apiBase}/metrics/project/${projectId}/commits-per-person?period_days=${periodDays}`
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch commits per person')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Error fetching commits per person:', error)
-      throw error
-    }
-  }
-
-
   return {
     // Projects
     fetchProjects,
     createProject,
     deleteProject,
-    // Project Metrics
+    // Repositories
+    fetchRepositories,
+    // Project Metrics (aggregated)
     fetchProjectMetrics,
-    fetchProjectTechnicalDebt,
-    fetchProjectBottlenecks,
-    fetchProjectEmployeeCare,
-    fetchPRsNeedingAttention,
-    fetchActiveContributors,
-    fetchCommitsPerPerson
+    // Repository Metrics
+    fetchRepositoryMetrics,
+    fetchRepositoryTechnicalDebt,
+    fetchRepositoryBottlenecks,
+    fetchRepositoryEmployeeCare
   }
 }
