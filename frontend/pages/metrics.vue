@@ -28,6 +28,36 @@
     </div>
 
     <div v-else class="metrics-container">
+      <!-- Team Effectiveness Score -->
+      <div class="card">
+        <h3>📊 Оценка эффективности команды</h3>
+        <p>Общий показатель производительности команды</p>
+        <div class="score-display">
+          <div class="score-circle">
+            <span class="score-value">{{ effectivenessScore }}</span>
+            <span class="score-label">/100</span>
+          </div>
+          <div class="score-details">
+            <div class="score-item">
+              <span class="label">Тренд:</span>
+              <span class="value">улучшение</span>
+            </div>
+            <div class="score-item">
+              <span class="label">Активные участники:</span>
+              <span class="value">{{ activeContributors }}</span>
+            </div>
+            <div class="score-item">
+              <span class="label">Среднее время ревью:</span>
+              <span class="value">{{ avgReviewTime }}ч</span>
+            </div>
+          </div>
+        </div>
+        <div v-if="hasAlert" class="alert" :class="`alert-${alertSeverity}`">
+          <strong>{{ alertSeverity === 'critical' ? '🚨' : '⚠️' }}</strong>
+          {{ alertMessage }}
+        </div>
+      </div>
+
       <!-- Bottleneck Analysis -->
       <div class="card">
         <h3>🚧 Анализ узких мест</h3>
@@ -78,36 +108,6 @@
             <li>⚠️ Ревью кода занимает более 2 дней в среднем</li>
             <li>Рассмотрите: увеличение мощности ревьюеров или установку SLA для ревью</li>
           </ul>
-        </div>
-      </div>
-
-      <!-- Team Effectiveness Score -->
-      <div class="card">
-        <h3>📊 Оценка эффективности команды</h3>
-        <p>Общий показатель производительности команды</p>
-        <div class="score-display">
-          <div class="score-circle">
-            <span class="score-value">{{ effectivenessScore }}</span>
-            <span class="score-label">/100</span>
-          </div>
-          <div class="score-details">
-            <div class="score-item">
-              <span class="label">Тренд:</span>
-              <span class="value">улучшение</span>
-            </div>
-            <div class="score-item">
-              <span class="label">Активные участники:</span>
-              <span class="value">{{ activeContributors }}</span>
-            </div>
-            <div class="score-item">
-              <span class="label">Среднее время ревью:</span>
-              <span class="value">{{ avgReviewTime }}ч</span>
-            </div>
-          </div>
-        </div>
-        <div v-if="hasAlert" class="alert" :class="`alert-${alertSeverity}`">
-          <strong>{{ alertSeverity === 'critical' ? '🚨' : '⚠️' }}</strong>
-          {{ alertMessage }}
         </div>
       </div>
 
