@@ -35,13 +35,7 @@
         <div class="bottleneck-info" v-if="bottleneckStage !== 'none'">
           <div class="bottleneck-stage">
             <span class="stage-icon">🔍</span>
-            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }}</span>
-          </div>
-          <div class="bottleneck-stats">
-            <div class="stat">
-              <span class="stat-label">Среднее время на этом этапе:</span>
-              <span class="stat-value">{{ bottleneckTime.toFixed(1) }} часов</span>
-            </div>
+            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }} ~{{ bottleneckTime.toFixed(1) }} часов</span>
           </div>
         </div>
         <div v-else class="bottleneck-info">
