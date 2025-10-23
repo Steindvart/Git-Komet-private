@@ -5,7 +5,7 @@ from app.db.session import Base
 
 
 class Project(Base):
-    """Проект - представляет Git-репозиторий / Project - represents a Git repository"""
+    """Проект - группа репозиториев / Project - collection of repositories"""
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -16,11 +16,31 @@ class Project(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
+    repositories = relationship("Repository", back_populates="project", cascade="all, delete-orphan")
     members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
-    pull_requests = relationship("PullRequest", back_populates="project", cascade="all, delete-orphan")
-    tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
     project_metrics = relationship("ProjectMetric", back_populates="project", cascade="all, delete-orphan")
-    technical_debt_metrics = relationship("TechnicalDebtMetric", back_populates="project", cascade="all, delete-orphan")
+
+
+class Repository(Base):
+    """Репозиторий - представляет Git-репозиторий / Repository - represents a Git repository"""
+    __tablename__ = "repositories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    external_id = Column(String, unique=True, index=True, nullable=False)  # External repository ID
+    name = Column(String, index=True, nullable=False)
+    description = Column(String, nullable=True)
+    url = Column(String, nullable=True)  # Repository URL
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    project = relationship("Project", back_populates="repositories")
+    pull_requests = relationship("PullRequest", back_populates="repository", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="repository", cascade="all, delete-orphan")
+    commits = relationship("Commit", back_populates="repository", cascade="all, delete-orphan")
+    repository_metrics = relationship("RepositoryMetric", back_populates="repository", cascade="all, delete-orphan")
+    technical_debt_metrics = relationship("TechnicalDebtMetric", back_populates="repository", cascade="all, delete-orphan")
 
 
 class ProjectMember(Base):
@@ -49,6 +69,7 @@ class Commit(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     external_id = Column(String, unique=True, index=True, nullable=False)  # Commit SHA
+    repository_id = Column(Integer, ForeignKey("repositories.id"), nullable=False)
     author_id = Column(Integer, ForeignKey("team_members.id"), nullable=True)
     message = Column(String, nullable=False)
     author_email = Column(String, nullable=False)
@@ -70,6 +91,7 @@ class Commit(Base):
     is_weekend = Column(Boolean, default=False)  # Committed on weekend
     
     # Relationships
+    repository = relationship("Repository", back_populates="commits")
     author = relationship("ProjectMember", back_populates="commits")
 
 
@@ -79,7 +101,7 @@ class PullRequest(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     external_id = Column(String, unique=True, index=True, nullable=False)  # PR ID
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    repository_id = Column(Integer, ForeignKey("repositories.id"), nullable=False)
     author_id = Column(Integer, ForeignKey("team_members.id"), nullable=True)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
@@ -100,7 +122,7 @@ class PullRequest(Base):
     files_changed = Column(Integer, default=0)
     
     # Relationships
-    project = relationship("Project", back_populates="pull_requests")
+    repository = relationship("Repository", back_populates="pull_requests")
     author = relationship("ProjectMember", foreign_keys=[author_id], back_populates="pull_requests")
     reviews = relationship("CodeReview", back_populates="pull_request", cascade="all, delete-orphan")
 
@@ -129,7 +151,7 @@ class Task(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     external_id = Column(String, unique=True, index=True, nullable=False)  # Issue/Task ID
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    repository_id = Column(Integer, ForeignKey("repositories.id"), nullable=False)
     assignee_id = Column(Integer, ForeignKey("team_members.id"), nullable=True)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
@@ -147,7 +169,7 @@ class Task(Base):
     time_in_testing = Column(Float, nullable=True)  # Hours
     
     # Relationships
-    project = relationship("Project", back_populates="tasks")
+    repository = relationship("Repository", back_populates="tasks")
     assignee = relationship("ProjectMember", back_populates="tasks")
 
 
@@ -174,12 +196,35 @@ class ProjectMetric(Base):
     project = relationship("Project", back_populates="project_metrics")
 
 
+class RepositoryMetric(Base):
+    """Рассчитанные метрики эффективности репозитория / Calculated repository effectiveness metrics"""
+    __tablename__ = "repository_metrics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    repository_id = Column(Integer, ForeignKey("repositories.id"), nullable=False)
+    metric_type = Column(String, nullable=False)  # effectiveness_score, technical_debt, bottleneck, employee_care, etc.
+    metric_value = Column(Text, nullable=False)  # JSON string for complex values
+    score = Column(Float, nullable=True)  # Normalized score 0-100
+    trend = Column(String, nullable=True)  # improving, stable, declining
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    calculated_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Alert data
+    has_alert = Column(Boolean, default=False)
+    alert_message = Column(String, nullable=True)
+    alert_severity = Column(String, nullable=True)  # info, warning, critical
+    
+    # Relationships
+    repository = relationship("Repository", back_populates="repository_metrics")
+
+
 class TechnicalDebtMetric(Base):
     """Отслеживание технического долга / Technical debt tracking over time"""
     __tablename__ = "technical_debt_metrics"
 
     id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    repository_id = Column(Integer, ForeignKey("repositories.id"), nullable=False)
     
     # Metrics
     test_coverage = Column(Float, nullable=True)  # Percentage
@@ -193,4 +238,4 @@ class TechnicalDebtMetric(Base):
     period_end = Column(DateTime, nullable=False)
     
     # Relationships
-    project = relationship("Project", back_populates="technical_debt_metrics")
+    repository = relationship("Repository", back_populates="technical_debt_metrics")

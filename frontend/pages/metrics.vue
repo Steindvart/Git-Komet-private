@@ -1,26 +1,48 @@
 <template>
   <div>
     <h1>Метрики и аналитика</h1>
-    <p class="subtitle">Анализ эффективности проекта на основе Git-метрик</p>
+    <p class="subtitle">Анализ эффективности репозитория на основе Git-метрик</p>
 
     <!-- Project Selector -->
-    <div class="project-selector">
-      <label for="project-select">Проект:</label>
-      <select
-        id="project-select"
-        v-model="selectedProjectId"
-        @change="onProjectChange"
-        :disabled="loading"
-      >
-        <option :value="null">-- Выберите проект --</option>
-        <option v-for="project in projects" :key="project.id" :value="project.id">
-          {{ project.name }}
-        </option>
-      </select>
+    <div class="selector-container">
+      <div class="selector-group">
+        <label for="project-select">Проект:</label>
+        <select
+          id="project-select"
+          v-model="selectedProjectId"
+          @change="onProjectChange"
+          :disabled="loading"
+        >
+          <option :value="null">-- Выберите проект --</option>
+          <option v-for="project in projects" :key="project.id" :value="project.id">
+            {{ project.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Repository Selector -->
+      <div class="selector-group" v-if="selectedProjectId">
+        <label for="repository-select">Репозиторий:</label>
+        <select
+          id="repository-select"
+          v-model="selectedRepositoryId"
+          @change="onRepositoryChange"
+          :disabled="loading || repositories.length === 0"
+        >
+          <option :value="null">-- Выберите репозиторий --</option>
+          <option v-for="repo in repositories" :key="repo.id" :value="repo.id">
+            {{ repo.name }}
+          </option>
+        </select>
+      </div>
     </div>
 
     <div v-if="!selectedProjectId" class="empty-state">
       <p>Выберите проект для просмотра метрик и аналитики</p>
+    </div>
+
+    <div v-else-if="!selectedRepositoryId" class="empty-state">
+      <p>Выберите репозиторий для просмотра детальной аналитики</p>
     </div>
 
     <div v-else-if="loading" class="loading-state">
@@ -28,9 +50,9 @@
     </div>
 
     <div v-else class="metrics-container">
-      <!-- Team Effectiveness Score -->
+      <!-- Repository Effectiveness Score -->
       <div class="card">
-        <h3>📊 Оценка эффективности проекта</h3>
+        <h3>📊 Оценка эффективности репозитория</h3>
         <p>Общий показатель производительности на основе git-метрик</p>
         <div class="score-display">
           <div class="score-circle">
@@ -103,51 +125,37 @@
         </div>
       </div>
 
-      <!-- Active Contributors -->
+      <!-- Bottlenecks -->
       <div class="card">
-        <h3>👥 Активные участники</h3>
-        <p>Анализ человеческих ресурсов на проекте</p>
-        <div class="metric-group">
+        <h3>🚦 Узкие места workflow</h3>
+        <p>Анализ этапов разработки с наибольшей задержкой</p>
+        <div v-if="bottleneckStage !== 'none'" class="metric-group">
           <div class="metric-item">
-            <span class="metric-label">Активные участники</span>
-            <span class="metric-value">{{ activeContributorsCount }}</span>
+            <span class="metric-label">Узкое место</span>
+            <span class="metric-value">{{ getStageLabel(bottleneckStage) }}</span>
           </div>
           <div class="metric-item">
-            <span class="metric-label">Всего коммитов</span>
-            <span class="metric-value">{{ activeContributorsTotalCommits }}</span>
+            <span class="metric-label">Среднее время</span>
+            <span class="metric-value">{{ avgTimeInStage }} ч</span>
           </div>
           <div class="metric-item">
-            <span class="metric-label">Среднее на участника</span>
-            <span class="metric-value">{{ avgCommitsPerContributor }}</span>
+            <span class="metric-label">Влияние</span>
+            <span class="metric-value">{{ impactScore }}/100</span>
           </div>
         </div>
+        <div v-else class="metric-group">
+          <p>✓ Узких мест не обнаружено</p>
+        </div>
+        <div class="recommendations" v-if="bottleneckRecommendations.length > 0">
+          <h4>💡 Рекомендации</h4>
+          <ul>
+            <li v-for="(rec, idx) in bottleneckRecommendations" :key="idx">{{ rec }}</li>
+          </ul>
+        </div>
       </div>
-
-      <!-- Commits Per Person (Expertise) -->
-      <div class="card">
-        <h3>🏆 Экспертность участников</h3>
-        <p>Вклад и уровень экспертности каждого участника</p>
-        <div v-if="contributors.length > 0" class="contributors-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Участник</th>
-                <th>Коммиты</th>
-                <th>Строк изменено</th>
-                <th>Уровень</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="contributor in contributors" :key="contributor.author_id">
-                <td class="contributor-name">{{ contributor.author_name }}</td>
-                <td class="commit-count">{{ contributor.commit_count }}</td>
-                <td class="lines-changed">{{ contributor.lines_changed }}</td>
-                <td class="expertise-level">
-                  <span :class="`badge badge-${contributor.expertise_level}`">
-                    {{ getExpertiseLevelLabel(contributor.expertise_level) }}
-                  </span>
-                </td>
-              </tr>
+    </div>
+  </div>
+</template>
             </tbody>
           </table>
         </div>
@@ -171,7 +179,9 @@
 <script setup lang="ts">
 const api = useApi()
 const projects = ref([])
+const repositories = ref([])
 const selectedProjectId = ref<number | null>(null)
+const selectedRepositoryId = ref<number | null>(null)
 const loading = ref(false)
 
 // Metrics data
@@ -194,16 +204,13 @@ const todoTrend = ref('stable')
 const debtScore = ref(0)
 const technicalDebtRecommendations = ref<string[]>([])
 
-// Active contributors metrics
-const activeContributorsCount = ref(0)
-const activeContributorsTotalCommits = ref(0)
-const avgCommitsPerContributor = ref(0)
-
-// Commits per person (expertise)
-const contributors = ref<any[]>([])
+// Bottleneck metrics
+const bottleneckStage = ref('none')
+const avgTimeInStage = ref(0)
+const impactScore = ref(0)
+const bottleneckRecommendations = ref<string[]>([])
 
 onMounted(async () => {
-  // Check if project is passed via query parameter
   const route = useRoute()
   const projectId = route.query.project ? Number(route.query.project) : null
   await loadProjects(projectId)
@@ -215,10 +222,10 @@ const loadProjects = async (preselectedProjectId: number | null = null) => {
     projects.value = await api.fetchProjects()
     if (preselectedProjectId && projects.value.some(p => p.id === preselectedProjectId)) {
       selectedProjectId.value = preselectedProjectId
-      await loadAllMetrics()
+      await loadRepositories()
     } else if (projects.value.length > 0) {
       selectedProjectId.value = projects.value[0].id
-      await loadAllMetrics()
+      await loadRepositories()
     }
   } catch (error) {
     console.error('Error loading projects:', error)
@@ -228,18 +235,43 @@ const loadProjects = async (preselectedProjectId: number | null = null) => {
 }
 
 const onProjectChange = async () => {
+  selectedRepositoryId.value = null
+  repositories.value = []
   if (selectedProjectId.value) {
+    await loadRepositories()
+  }
+}
+
+const loadRepositories = async () => {
+  if (!selectedProjectId.value) return
+  
+  loading.value = true
+  try {
+    repositories.value = await api.fetchRepositories(selectedProjectId.value)
+    if (repositories.value.length > 0) {
+      selectedRepositoryId.value = repositories.value[0].id
+      await loadAllMetrics()
+    }
+  } catch (error) {
+    console.error('Error loading repositories:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const onRepositoryChange = async () => {
+  if (selectedRepositoryId.value) {
     await loadAllMetrics()
   }
 }
 
 const loadAllMetrics = async () => {
-  if (!selectedProjectId.value) return
+  if (!selectedRepositoryId.value) return
 
   loading.value = true
   try {
     // Load effectiveness metrics
-    const effectiveness = await api.fetchProjectMetrics(selectedProjectId.value)
+    const effectiveness = await api.fetchRepositoryMetrics(selectedRepositoryId.value)
     effectivenessScore.value = Math.round(effectiveness.effectiveness_score)
     activeContributors.value = effectiveness.active_contributors
     totalCommits.value = effectiveness.total_commits
@@ -251,25 +283,22 @@ const loadAllMetrics = async () => {
     weekendPercentage.value = Math.round(effectiveness.weekend_percentage)
 
     // Load technical debt
-    const debt = await api.fetchProjectTechnicalDebt(selectedProjectId.value)
+    const debt = await api.fetchRepositoryTechnicalDebt(selectedRepositoryId.value)
     todoInCode.value = debt.todo_count
     todoTrend.value = debt.todo_trend || 'stable'
     debtScore.value = Math.round(debt.technical_debt_score)
     technicalDebtRecommendations.value = debt.recommendations || []
 
     // Load employee care metrics
-    const employeeCare = await api.fetchProjectEmployeeCare(selectedProjectId.value)
+    const employeeCare = await api.fetchRepositoryEmployeeCare(selectedRepositoryId.value)
     employeeCareScore.value = Math.round(employeeCare.employee_care_score)
 
-    // Load active contributors
-    const activeContributorsData = await api.fetchActiveContributors(selectedProjectId.value)
-    activeContributorsCount.value = activeContributorsData.active_contributors
-    activeContributorsTotalCommits.value = activeContributorsData.total_commits
-    avgCommitsPerContributor.value = activeContributorsData.avg_commits_per_contributor
-
-    // Load commits per person (expertise)
-    const commitsPerPerson = await api.fetchCommitsPerPerson(selectedProjectId.value)
-    contributors.value = commitsPerPerson.contributors || []
+    // Load bottlenecks
+    const bottlenecks = await api.fetchRepositoryBottlenecks(selectedRepositoryId.value)
+    bottleneckStage.value = bottlenecks.bottleneck_stage || 'none'
+    avgTimeInStage.value = Math.round(bottlenecks.avg_time_in_stage || 0)
+    impactScore.value = Math.round(bottlenecks.impact_score || 0)
+    bottleneckRecommendations.value = bottlenecks.recommendations || []
 
   } catch (error) {
     console.error('Error loading metrics:', error)
@@ -296,14 +325,15 @@ const getEmployeeCareClass = (score: number) => {
   return 'low-score'
 }
 
-const getExpertiseLevelLabel = (level: string) => {
+const getStageLabel = (stage: string) => {
   const labels: Record<string, string> = {
-    'beginner': 'Начинающий',
-    'intermediate': 'Средний',
-    'advanced': 'Продвинутый',
-    'expert': 'Эксперт'
+    'todo': 'TODO (ожидание)',
+    'development': 'Разработка',
+    'review': 'Ревью кода',
+    'testing': 'Тестирование',
+    'none': 'Нет узких мест'
   }
-  return labels[level] || level
+  return labels[stage] || stage
 }
 </script>
 
@@ -313,16 +343,19 @@ const getExpertiseLevelLabel = (level: string) => {
   margin-bottom: 1.5rem;
 }
 
-.project-selector {
+.selector-container {
   margin-bottom: 2rem;
   padding: 1.5rem;
   background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
   border-radius: 0.75rem;
   border: 1px solid var(--border-primary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
 }
 
-.project-selector label {
+.selector-group label {
   display: block;
   margin-bottom: 0.75rem;
   font-weight: 600;
@@ -330,7 +363,7 @@ const getExpertiseLevelLabel = (level: string) => {
   color: var(--text-primary);
 }
 
-.project-selector select {
+.selector-group select {
   width: 100%;
   padding: 1rem;
   border: 2px solid var(--border-primary);
@@ -338,6 +371,33 @@ const getExpertiseLevelLabel = (level: string) => {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-size: 1.125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.selector-group select:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+.selector-group select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.2);
+}
+
+.selector-group select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .selector-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
