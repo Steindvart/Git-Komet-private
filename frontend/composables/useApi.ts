@@ -123,6 +123,36 @@ export const useApi = () => {
     }
   }
 
+  const fetchActiveContributors = async (projectId: number, periodDays: number = 30) => {
+    try {
+      const response = await fetch(
+        `${apiBase}/metrics/project/${projectId}/active-contributors?period_days=${periodDays}`
+      )
+      if (!response.ok) {
+        throw new Error('Failed to fetch active contributors')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching active contributors:', error)
+      throw error
+    }
+  }
+
+  const fetchCommitsPerPerson = async (projectId: number, periodDays: number = 30) => {
+    try {
+      const response = await fetch(
+        `${apiBase}/metrics/project/${projectId}/commits-per-person?period_days=${periodDays}`
+      )
+      if (!response.ok) {
+        throw new Error('Failed to fetch commits per person')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching commits per person:', error)
+      throw error
+    }
+  }
+
 
   return {
     // Projects
@@ -134,6 +164,8 @@ export const useApi = () => {
     fetchProjectTechnicalDebt,
     fetchProjectBottlenecks,
     fetchProjectEmployeeCare,
-    fetchPRsNeedingAttention
+    fetchPRsNeedingAttention,
+    fetchActiveContributors,
+    fetchCommitsPerPerson
   }
 }

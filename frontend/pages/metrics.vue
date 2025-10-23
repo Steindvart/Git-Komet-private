@@ -30,8 +30,8 @@
     <div v-else class="metrics-container">
       <!-- Team Effectiveness Score -->
       <div class="card">
-        <h3>📊 Оценка эффективности команды</h3>
-        <p>Общий показатель производительности команды</p>
+        <h3>📊 Оценка эффективности проекта</h3>
+        <p>Общий показатель производительности на основе git-метрик</p>
         <div class="score-display">
           <div class="score-circle">
             <span class="score-value">{{ effectivenessScore }}</span>
@@ -40,15 +40,15 @@
           <div class="score-details">
             <div class="score-item">
               <span class="label">Тренд:</span>
-              <span class="value">улучшение</span>
+              <span class="value">{{ trend }}</span>
             </div>
             <div class="score-item">
               <span class="label">Активные участники:</span>
               <span class="value">{{ activeContributors }}</span>
             </div>
             <div class="score-item">
-              <span class="label">Среднее время ревью:</span>
-              <span class="value">{{ avgReviewTime }}ч</span>
+              <span class="label">Всего коммитов:</span>
+              <span class="value">{{ totalCommits }}</span>
             </div>
           </div>
         </div>
@@ -61,29 +61,11 @@
       <!-- Technical Debt Analysis -->
       <div class="card">
         <h3>🔧 Анализ технического долга</h3>
+        <p>Отслеживание TODO комментариев из diff коммитов</p>
         <div class="metric-group">
           <div class="metric-item">
-            <span class="metric-label">Покрытие тестами</span>
-            <div class="metric-bar">
-              <div class="bar-fill" :style="{ width: '67%' }"></div>
-            </div>
-            <span class="metric-value">67% <span class="trend up">↑</span></span>
-          </div>
-          <div class="metric-item">
             <span class="metric-label">TODO в коде</span>
-            <span class="metric-value">{{ todoInCode }} <span class="trend stable">→</span></span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">TODO в ревью</span>
-            <span class="metric-value">{{ todoInReviews }} <span class="trend up">↑</span></span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Code Churn (переписывание)</span>
-            <span class="metric-value">{{ churnRate }}% <span class="trend" :class="churnRate > 25 ? 'up' : 'stable'">{{ churnRate > 25 ? '↑' : '→' }}</span></span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Плотность комментариев в ревью</span>
-            <span class="metric-value">{{ reviewCommentDensity }} на PR <span class="trend down">↓</span></span>
+            <span class="metric-value">{{ todoInCode }} <span class="trend" :class="getTrendClass(todoTrend)">{{ getTrendArrow(todoTrend) }}</span></span>
           </div>
           <div class="metric-item">
             <span class="metric-label">Оценка долга</span>
@@ -93,9 +75,7 @@
         <div class="recommendations">
           <h4>💡 Рекомендации</h4>
           <ul>
-            <li>Покрытие тестами улучшается - продолжайте в том же духе!</li>
-            <li>TODO в ревью растут - рассмотрите оформление их в отдельные тикеты</li>
-            <li v-if="churnRate > 25">⚠️ Высокий уровень переписывания кода - проверьте качество планирования</li>
+            <li v-for="(rec, idx) in technicalDebtRecommendations" :key="idx">{{ rec }}</li>
           </ul>
         </div>
       </div>
@@ -114,12 +94,65 @@
             <span class="metric-value">{{ weekendPercentage }}% <span class="trend" :class="weekendPercentage > 20 ? 'up' : 'stable'">{{ weekendPercentage > 20 ? '↑' : '→' }}</span></span>
           </div>
           <div class="metric-item">
-            <span class="metric-label">Пики активности</span>
-            <span class="metric-value">{{ peakHours }}</span>
+            <span class="metric-label">Оценка заботы</span>
+            <span class="metric-value" :class="getEmployeeCareClass(employeeCareScore)">{{ employeeCareScore }}/100</span>
           </div>
         </div>
         <div v-if="afterHoursPercentage > 30 || weekendPercentage > 20" class="alert alert-warning">
           <strong>⚠️</strong> Обнаружена высокая активность вне рабочего времени. Проверьте нагрузку на команду.
+        </div>
+      </div>
+
+      <!-- Active Contributors -->
+      <div class="card">
+        <h3>👥 Активные участники</h3>
+        <p>Анализ человеческих ресурсов на проекте</p>
+        <div class="metric-group">
+          <div class="metric-item">
+            <span class="metric-label">Активные участники</span>
+            <span class="metric-value">{{ activeContributorsCount }}</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Всего коммитов</span>
+            <span class="metric-value">{{ activeContributorsTotalCommits }}</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Среднее на участника</span>
+            <span class="metric-value">{{ avgCommitsPerContributor }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Commits Per Person (Expertise) -->
+      <div class="card">
+        <h3>🏆 Экспертность участников</h3>
+        <p>Вклад и уровень экспертности каждого участника</p>
+        <div v-if="contributors.length > 0" class="contributors-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Участник</th>
+                <th>Коммиты</th>
+                <th>Строк изменено</th>
+                <th>Уровень</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="contributor in contributors" :key="contributor.author_id">
+                <td class="contributor-name">{{ contributor.author_name }}</td>
+                <td class="commit-count">{{ contributor.commit_count }}</td>
+                <td class="lines-changed">{{ contributor.lines_changed }}</td>
+                <td class="expertise-level">
+                  <span :class="`badge badge-${contributor.expertise_level}`">
+                    {{ getExpertiseLevelLabel(contributor.expertise_level) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="empty-state">
+          <p>Нет данных об участниках за выбранный период</p>
         </div>
       </div>
 
@@ -128,7 +161,7 @@
         <h3>📈 Тренды во времени</h3>
         <div class="chart-placeholder">
           <p>📊 Визуализация исторических трендов</p>
-          <p class="note">Графики, показывающие эффективность, технический долг и узкие места во времени</p>
+          <p class="note">Графики, показывающие эффективность, технический долг и активность во времени</p>
         </div>
       </div>
     </div>
@@ -144,7 +177,8 @@ const loading = ref(false)
 // Metrics data
 const effectivenessScore = ref(0)
 const activeContributors = ref(0)
-const avgReviewTime = ref(0)
+const totalCommits = ref(0)
+const trend = ref('stable')
 const hasAlert = ref(false)
 const alertSeverity = ref('')
 const alertMessage = ref('')
@@ -152,28 +186,21 @@ const alertMessage = ref('')
 // Work-life balance metrics
 const afterHoursPercentage = ref(0)
 const weekendPercentage = ref(0)
-const peakHours = ref('--:--')
+const employeeCareScore = ref(100)
 
 // Technical debt metrics
 const todoInCode = ref(0)
-const todoInReviews = ref(0)
-const churnRate = ref(0)
-const reviewCommentDensity = ref(0)
+const todoTrend = ref('stable')
 const debtScore = ref(0)
+const technicalDebtRecommendations = ref<string[]>([])
 
-// Bottleneck data
-const bottleneckStage = ref('none')
-const bottleneckTime = ref(0)
-const stageTimes = ref({
-  todo: 0,
-  development: 0,
-  review: 0,
-  testing: 0
-})
+// Active contributors metrics
+const activeContributorsCount = ref(0)
+const activeContributorsTotalCommits = ref(0)
+const avgCommitsPerContributor = ref(0)
 
-// PRs needing attention
-const prsNeedingAttention = ref([])
-const totalPRsNeedingAttention = ref(0)
+// Commits per person (expertise)
+const contributors = ref<any[]>([])
 
 onMounted(async () => {
   // Check if project is passed via query parameter
@@ -215,36 +242,34 @@ const loadAllMetrics = async () => {
     const effectiveness = await api.fetchProjectMetrics(selectedProjectId.value)
     effectivenessScore.value = Math.round(effectiveness.effectiveness_score)
     activeContributors.value = effectiveness.active_contributors
-    avgReviewTime.value = effectiveness.avg_pr_review_time
+    totalCommits.value = effectiveness.total_commits
+    trend.value = effectiveness.trend || 'stable'
     hasAlert.value = effectiveness.has_alert
     alertSeverity.value = effectiveness.alert_severity || 'info'
     alertMessage.value = effectiveness.alert_message || ''
     afterHoursPercentage.value = Math.round(effectiveness.after_hours_percentage)
     weekendPercentage.value = Math.round(effectiveness.weekend_percentage)
-    churnRate.value = Math.round(effectiveness.churn_rate)
 
     // Load technical debt
     const debt = await api.fetchProjectTechnicalDebt(selectedProjectId.value)
     todoInCode.value = debt.todo_count
-    todoInReviews.value = debt.todo_in_reviews || 0
-    reviewCommentDensity.value = debt.review_comment_density
+    todoTrend.value = debt.todo_trend || 'stable'
     debtScore.value = Math.round(debt.technical_debt_score)
+    technicalDebtRecommendations.value = debt.recommendations || []
 
-    // Load bottlenecks
-    const bottleneck = await api.fetchProjectBottlenecks(selectedProjectId.value)
-    bottleneckStage.value = bottleneck.bottleneck_stage
-    bottleneckTime.value = bottleneck.avg_time_in_stage
-    stageTimes.value = bottleneck.stage_times || {
-      todo: 0,
-      development: 0,
-      review: 0,
-      testing: 0
-    }
+    // Load employee care metrics
+    const employeeCare = await api.fetchProjectEmployeeCare(selectedProjectId.value)
+    employeeCareScore.value = Math.round(employeeCare.employee_care_score)
 
-    // Load PRs needing attention (all PRs, min_hours=0)
-    const prsData = await api.fetchPRsNeedingAttention(selectedProjectId.value, 0, 5)
-    prsNeedingAttention.value = prsData.prs || []
-    totalPRsNeedingAttention.value = prsData.total_count || 0
+    // Load active contributors
+    const activeContributorsData = await api.fetchActiveContributors(selectedProjectId.value)
+    activeContributorsCount.value = activeContributorsData.active_contributors
+    activeContributorsTotalCommits.value = activeContributorsData.total_commits
+    avgCommitsPerContributor.value = activeContributorsData.avg_commits_per_contributor
+
+    // Load commits per person (expertise)
+    const commitsPerPerson = await api.fetchCommitsPerPerson(selectedProjectId.value)
+    contributors.value = commitsPerPerson.contributors || []
 
   } catch (error) {
     console.error('Error loading metrics:', error)
@@ -253,34 +278,32 @@ const loadAllMetrics = async () => {
   }
 }
 
-const getStageDisplayName = (stage: string) => {
-  const names: Record<string, string> = {
-    'todo': 'TODO (ожидание начала)',
-    'development': 'Разработка',
-    'review': 'Ревью кода',
-    'testing': 'Тестирование',
-    'none': 'Нет узких мест'
+const getTrendClass = (trendValue: string) => {
+  if (trendValue === 'up') return 'up'
+  if (trendValue === 'down') return 'down'
+  return 'stable'
+}
+
+const getTrendArrow = (trendValue: string) => {
+  if (trendValue === 'up') return '↑'
+  if (trendValue === 'down') return '↓'
+  return '→'
+}
+
+const getEmployeeCareClass = (score: number) => {
+  if (score >= 80) return 'good-score'
+  if (score >= 60) return 'medium-score'
+  return 'low-score'
+}
+
+const getExpertiseLevelLabel = (level: string) => {
+  const labels: Record<string, string> = {
+    'beginner': 'Начинающий',
+    'intermediate': 'Средний',
+    'advanced': 'Продвинутый',
+    'expert': 'Эксперт'
   }
-  return names[stage] || stage
-}
-
-// Calculate percentage width for stage bar based on the max time
-const getStageBarWidth = (stageTime: number) => {
-  const maxTime = Math.max(
-    stageTimes.value.todo,
-    stageTimes.value.development,
-    stageTimes.value.review,
-    stageTimes.value.testing,
-    1 // minimum to avoid division by zero
-  )
-  return Math.round((stageTime / maxTime) * 100)
-}
-
-// Format stage time display
-const formatStageTime = (hours: number) => {
-  if (hours === 0) return '0ч'
-  if (hours < 1) return `${Math.round(hours * 60)}мин`
-  return `${Math.round(hours)}ч`
+  return labels[level] || level
 }
 </script>
 
@@ -636,34 +659,13 @@ const formatStageTime = (hours: number) => {
   margin-top: 0.5rem;
 }
 
-/* PR/MR Needing Attention Styles */
-.prs-needing-attention {
-  margin-top: 2rem;
-  padding: 1rem;
-  background-color: var(--bg-tertiary);
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-primary);
-}
-
-.prs-needing-attention h4 {
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.empty-prs {
-  text-align: center;
-  padding: 1.5rem;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.prs-table {
+/* Contributors table */
+.contributors-table {
+  margin-top: 1rem;
   overflow-x: auto;
 }
 
-.prs-table table {
+.contributors-table table {
   width: 100%;
   border-collapse: collapse;
   background-color: var(--bg-primary);
@@ -671,11 +673,11 @@ const formatStageTime = (hours: number) => {
   overflow: hidden;
 }
 
-.prs-table thead {
+.contributors-table thead {
   background-color: var(--bg-secondary);
 }
 
-.prs-table th {
+.contributors-table th {
   padding: 0.75rem 1rem;
   text-align: left;
   font-weight: 600;
@@ -684,51 +686,79 @@ const formatStageTime = (hours: number) => {
   border-bottom: 2px solid var(--border-primary);
 }
 
-.prs-table td {
+.contributors-table td {
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-primary);
 }
 
-.prs-table tbody tr:last-child td {
+.contributors-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.prs-table tbody tr:hover {
+.contributors-table tbody tr:hover {
   background-color: var(--bg-tertiary);
   transition: background-color 0.2s ease;
 }
 
-.indicator-cell {
-  font-size: 1.5rem;
-  text-align: center;
-  width: 80px;
-}
-
-.pr-title {
+.contributor-name {
   font-weight: 500;
-  max-width: 400px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.time-cell {
+.commit-count, .lines-changed {
+  text-align: center;
   font-weight: 600;
-  color: var(--danger);
-  text-align: center;
-  width: 150px;
 }
 
-.cycles-cell {
+.expertise-level {
   text-align: center;
-  width: 100px;
 }
 
-.prs-note {
-  margin-top: 0.75rem;
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
   font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-beginner {
+  background-color: rgba(88, 166, 255, 0.2);
+  color: var(--accent-primary);
+}
+
+.badge-intermediate {
+  background-color: rgba(106, 192, 115, 0.2);
+  color: var(--success);
+}
+
+.badge-advanced {
+  background-color: rgba(210, 153, 34, 0.2);
+  color: var(--warning);
+}
+
+.badge-expert {
+  background-color: rgba(138, 89, 252, 0.2);
+  color: #8a59fc;
+}
+
+.good-score {
+  color: var(--success);
+}
+
+.medium-score {
+  color: var(--warning);
+}
+
+.low-score {
+  color: var(--danger);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
   color: var(--text-secondary);
   font-style: italic;
 }
