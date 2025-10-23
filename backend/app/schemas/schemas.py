@@ -137,14 +137,16 @@ class Task(TaskBase):
 
 # Analysis Response Schemas
 class ProjectEffectivenessMetrics(BaseModel):
-    """Метрики эффективности проекта / Project effectiveness metrics"""
+    """
+    Метрики эффективности проекта / Project effectiveness metrics.
+    
+    Новое ТЗ: Метрики основаны только на данных коммитов.
+    """
     project_id: int
     project_name: str
     effectiveness_score: float  # 0-100
     trend: str  # improving, stable, declining
     total_commits: int
-    total_prs: int
-    avg_pr_review_time: float
     active_contributors: int
     after_hours_percentage: float
     weekend_percentage: float
@@ -169,16 +171,56 @@ class EmployeeCareMetrics(BaseModel):
     period_end: datetime
 
 
+class ActiveContributorsMetrics(BaseModel):
+    """
+    Метрика активных участников / Active contributors metrics.
+    
+    Новое ТЗ: Анализ активных участников - количество уникальных авторов коммитов
+    за период, чтобы понимать сколько человеческих ресурсов тратится на проект.
+    """
+    project_id: int
+    project_name: str
+    active_contributors: int
+    total_commits: int
+    avg_commits_per_contributor: float
+    period_start: datetime
+    period_end: datetime
+
+
+class ContributorCommitStats(BaseModel):
+    """Статистика коммитов отдельного участника / Individual contributor commit stats"""
+    author_id: int
+    author_name: str
+    author_email: str
+    commit_count: int
+    lines_changed: int
+    expertise_level: str  # beginner, intermediate, advanced, expert
+
+
+class CommitsPerPersonMetrics(BaseModel):
+    """
+    Метрика коммитов на человека / Commits per person metrics.
+    
+    Новое ТЗ: Количество коммитов на участника для понимания уровня экспертности по проекту.
+    """
+    project_id: int
+    project_name: str
+    contributors: List[ContributorCommitStats]
+    total_contributors: int
+    period_start: datetime
+    period_end: datetime
+
+
 class TechnicalDebtAnalysis(BaseModel):
-    team_id: Optional[int] = None
-    project_id: Optional[int] = None
-    test_coverage: float
-    test_coverage_trend: str
+    """
+    Анализ технического долга на основе TODO комментариев.
+    Technical debt analysis based on TODO comments only.
+    
+    Новое ТЗ: Анализируются ТОЛЬКО TODO комментарии из diff коммитов.
+    """
+    project_id: int
     todo_count: int
-    todo_in_reviews: Optional[int] = None
-    todo_trend: str
-    churn_rate: Optional[float] = None
-    review_comment_density: float
+    todo_trend: str  # up, down, stable
     technical_debt_score: float  # 0-100, lower is better
     recommendations: List[str]
     period_start: datetime

@@ -148,7 +148,7 @@ class TestProjectEffectivenessService:
     """Тесты для сервиса эффективности проекта."""
     
     def test_calculate_effectiveness_score(self, db_session, sample_project):
-        """Тест расчёта оценки эффективности."""
+        """Тест расчёта оценки эффективности (новое ТЗ: без PR и задач)."""
         period_end = datetime.utcnow()
         period_start = period_end - timedelta(days=30)
         
@@ -161,7 +161,6 @@ class TestProjectEffectivenessService:
         assert result["project_name"] == sample_project.name
         assert 0 <= result["effectiveness_score"] <= 100
         assert result["total_commits"] == 20
-        assert result["total_prs"] == 5
         assert result["active_contributors"] == 2
         assert isinstance(result["has_alert"], bool)
     
@@ -183,6 +182,45 @@ class TestProjectEffectivenessService:
         assert isinstance(result["recommendations"], list)
         assert len(result["recommendations"]) > 0
     
+    def test_calculate_active_contributors(self, db_session, sample_project):
+        """Тест расчёта активных участников (новое ТЗ)."""
+        period_end = datetime.utcnow()
+        period_start = period_end - timedelta(days=30)
+        
+        result = ProjectEffectivenessService.calculate_active_contributors(
+            db_session, sample_project.id, period_start, period_end
+        )
+        
+        assert result is not None
+        assert result["project_id"] == sample_project.id
+        assert result["active_contributors"] == 2
+        assert result["total_commits"] == 20
+        assert result["avg_commits_per_contributor"] == 10.0
+    
+    def test_calculate_commits_per_person(self, db_session, sample_project):
+        """Тест расчёта коммитов на человека для оценки экспертности (новое ТЗ)."""
+        period_end = datetime.utcnow()
+        period_start = period_end - timedelta(days=30)
+        
+        result = ProjectEffectivenessService.calculate_commits_per_person(
+            db_session, sample_project.id, period_start, period_end
+        )
+        
+        assert result is not None
+        assert result["project_id"] == sample_project.id
+        assert result["total_contributors"] == 2
+        assert len(result["contributors"]) == 2
+        
+        # Проверить структуру данных участника
+        contributor = result["contributors"][0]
+        assert "author_id" in contributor
+        assert "author_name" in contributor
+        assert "author_email" in contributor
+        assert "commit_count" in contributor
+        assert "lines_changed" in contributor
+        assert "expertise_level" in contributor
+        assert contributor["expertise_level"] in ["beginner", "intermediate", "advanced", "expert"]
+    
     def test_nonexistent_project(self, db_session):
         """Тест для несуществующего проекта."""
         period_end = datetime.utcnow()
@@ -199,7 +237,7 @@ class TestProjectTechnicalDebtService:
     """Тесты для сервиса технического долга."""
     
     def test_analyze_technical_debt(self, db_session, sample_project):
-        """Тест анализа технического долга."""
+        """Тест анализа технического долга (новое ТЗ: только TODO)."""
         period_end = datetime.utcnow()
         period_start = period_end - timedelta(days=30)
         
@@ -209,12 +247,11 @@ class TestProjectTechnicalDebtService:
         
         assert result is not None
         assert result["project_id"] == sample_project.id
-        assert 0 <= result["test_coverage"] <= 100
-        assert result["test_coverage_trend"] in ["up", "down", "stable"]
         assert result["todo_count"] >= 0
-        assert result["review_comment_density"] >= 0
+        assert result["todo_trend"] in ["up", "down", "stable"]
         assert 0 <= result["technical_debt_score"] <= 100
         assert isinstance(result["recommendations"], list)
+        assert len(result["recommendations"]) > 0
     
     def test_save_technical_debt_metric(self, db_session, sample_project):
         """Тест сохранения метрики технического долга."""
@@ -222,11 +259,9 @@ class TestProjectTechnicalDebtService:
         period_start = period_end - timedelta(days=30)
         
         metrics = {
-            "test_coverage": 65.0,
-            "test_coverage_trend": "up",
             "todo_count": 50,
             "todo_trend": "stable",
-            "review_comment_density": 3.5
+            "technical_debt_score": 25.0
         }
         
         saved_metric = ProjectTechnicalDebtService.save_technical_debt_metric(
@@ -235,7 +270,6 @@ class TestProjectTechnicalDebtService:
         
         assert saved_metric is not None
         assert saved_metric.project_id == sample_project.id
-        assert saved_metric.test_coverage == 65.0
         assert saved_metric.todo_count == 50
 
 

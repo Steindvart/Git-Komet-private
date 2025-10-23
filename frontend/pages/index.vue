@@ -32,40 +32,17 @@
             <span class="stat-value">{{ projectMetrics.total_commits }}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">PR</span>
-            <span class="stat-value">{{ projectMetrics.total_prs }}</span>
-          </div>
-          <div class="stat-item">
             <span class="stat-label">Участники</span>
             <span class="stat-value">{{ projectMetrics.active_contributors }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Code Churn</span>
+            <span class="stat-value">{{ projectMetrics.churn_rate }}%</span>
           </div>
         </div>
         <div v-if="projectMetrics.has_alert" class="alert" :class="`alert-${projectMetrics.alert_severity}`">
           <strong>{{ projectMetrics.alert_severity === 'critical' ? '🚨' : '⚠️' }}</strong>
           {{ projectMetrics.alert_message }}
-        </div>
-
-        <!-- Critical PRs Table (only 🌩️ status) -->
-        <div v-if="criticalPRs.length > 0" class="critical-prs">
-          <h4>⤵️ Запросы, требующие внимания</h4>
-          <div class="prs-table">
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Название</th>
-                  <th>Время на ревью</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="pr in criticalPRs" :key="pr.pr_id">
-                  <td class="indicator-cell">{{ pr.indicator }}</td>
-                  <td class="pr-title">{{ pr.title }}</td>
-                  <td class="time-cell">{{ pr.time_in_review_hours }}ч</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
 
@@ -101,14 +78,14 @@
             <span class="analysis-icon">🔧</span>
             <div class="analysis-info">
               <strong>Технический долг</strong>
-              <p>Покрытие тестами, рост TODO, качество ревью, code churn</p>
+              <p>Анализ TODO комментариев из diff коммитов</p>
             </div>
           </div>
           <div class="analysis-item">
-            <span class="analysis-icon">🚧</span>
+            <span class="analysis-icon">👥</span>
             <div class="analysis-info">
-              <strong>Узкие места</strong>
-              <p>Выявление замедлений в workflow и рекомендации</p>
+              <strong>Активные участники</strong>
+              <p>Количество уникальных авторов коммитов и их экспертность</p>
             </div>
           </div>
           <div class="analysis-item">
@@ -129,7 +106,6 @@ const api = useApi()
 const projects = ref([])
 const selectedProjectId = ref<number | null>(null)
 const projectMetrics = ref<any>(null)
-const criticalPRs = ref([])
 const loading = ref(false)
 
 onMounted(async () => {
@@ -166,10 +142,6 @@ const loadProjectMetrics = async () => {
   loading.value = true
   try {
     projectMetrics.value = await api.fetchProjectMetrics(selectedProjectId.value)
-
-    // Load PRs and filter only critical ones (🌩️ - more than 96 hours)
-    const prsData = await api.fetchPRsNeedingAttention(selectedProjectId.value, 96, 10)
-    criticalPRs.value = (prsData.prs || []).filter((pr: any) => pr.indicator === '🌩️')
   } catch (error) {
     console.error('Error loading project metrics:', error)
   } finally {
@@ -342,84 +314,6 @@ const loadProjectMetrics = async () => {
   color: var(--text-secondary);
   font-size: 0.875rem;
   margin: 0;
-}
-
-/* Critical PRs Table */
-.critical-prs {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background-color: var(--bg-tertiary);
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-primary);
-}
-
-.critical-prs h4 {
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.prs-table {
-  overflow-x: auto;
-}
-
-.prs-table table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: var(--bg-primary);
-  border-radius: 0.5rem;
-  overflow: hidden;
-}
-
-.prs-table thead {
-  background-color: var(--bg-secondary);
-}
-
-.prs-table th {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  border-bottom: 2px solid var(--border-primary);
-}
-
-.prs-table td {
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.prs-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.prs-table tbody tr:hover {
-  background-color: var(--bg-tertiary);
-  transition: background-color 0.2s ease;
-}
-
-.indicator-cell {
-  font-size: 1.5rem;
-  text-align: center;
-  width: 60px;
-}
-
-.pr-title {
-  font-weight: 500;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.time-cell {
-  font-weight: 600;
-  color: var(--danger);
-  text-align: center;
-  width: 120px;
 }
 
 

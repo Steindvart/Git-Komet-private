@@ -5,6 +5,8 @@ from app.db.session import get_db
 from app.schemas.schemas import (
     ProjectEffectivenessMetrics,
     EmployeeCareMetrics,
+    ActiveContributorsMetrics,
+    CommitsPerPersonMetrics,
     TechnicalDebtAnalysis,
     BottleneckAnalysis,
     PRsNeedingAttentionResponse
@@ -182,6 +184,8 @@ def get_prs_needing_attention(
     
     Этот endpoint возвращает PR/MR, отсортированные по времени нахождения на ревью.
     По умолчанию возвращает все открытые PR/MR (min_hours=0).
+    
+    УСТАРЕЛО: В новом ТЗ у нас нет доступа к данным о PR/MR.
     """
     prs = ProjectBottleneckService.get_prs_needing_attention(
         db=db,
@@ -198,4 +202,62 @@ def get_prs_needing_attention(
         "prs": prs,
         "total_count": len(prs)
     }
+
+
+@router.get("/project/{project_id}/active-contributors", response_model=ActiveContributorsMetrics)
+def get_active_contributors(
+    project_id: int,
+    period_days: int = Query(default=30, ge=1, le=365, description="Период анализа в днях (по умолчанию 30 дней)"),
+    db: Session = Depends(get_db)
+):
+    """
+    Получить метрику активных участников проекта.
+    Get active contributors metric for the project.
+    
+    Новое ТЗ: Анализ активных участников - количество активных участников,
+    чтобы понимать сколько примерно человеческих ресурсов тратится на проект по факту.
+    Берутся все коммиты за последний месяц и смотрим кто автор.
+    Каждый уникальный автор - это активный участник.
+    """
+    period_end = datetime.utcnow()
+    period_start = period_end - timedelta(days=period_days)
+    
+    metrics = ProjectEffectivenessService.calculate_active_contributors(
+        db, project_id, period_start, period_end
+    )
+    
+    if not metrics:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    return metrics
+
+
+@router.get("/project/{project_id}/commits-per-person", response_model=CommitsPerPersonMetrics)
+def get_commits_per_person(
+    project_id: int,
+    period_days: int = Query(default=30, ge=1, le=365, description="Период анализа в днях (по умолчанию 30 дней)"),
+    db: Session = Depends(get_db)
+):
+    """
+    Получить количество коммитов на каждого участника проекта.
+    Get commit count per person for the project.
+    
+    Новое ТЗ: Количество коммитов на того или иного человека,
+    чтобы понимать уровень экспертности по проекту.
+    Метрика включает:
+    - Количество коммитов каждого участника
+    - Количество измененных строк
+    - Уровень экспертности (beginner, intermediate, advanced, expert)
+    """
+    period_end = datetime.utcnow()
+    period_start = period_end - timedelta(days=period_days)
+    
+    metrics = ProjectEffectivenessService.calculate_commits_per_person(
+        db, project_id, period_start, period_end
+    )
+    
+    if not metrics:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    return metrics
 

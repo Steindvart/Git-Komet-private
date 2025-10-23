@@ -1,17 +1,147 @@
 """
 Сервис для расчёта метрик эффективности проекта.
 Service for calculating project effectiveness metrics.
+
+Новое ТЗ: Доступны только git коммиты, ветки, репозитории и diff коммитов.
+Добавлены новые метрики:
+- Активные участники (уникальные авторы коммитов за период)
+- Количество коммитов на человека (для оценки экспертности)
 """
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models.models import Project, ProjectMember, Commit, PullRequest, Task, ProjectMetric
+from app.models.models import Project, ProjectMember, Commit, ProjectMetric
 import json
 
 
 class ProjectEffectivenessService:
     """Сервис для расчёта общей оценки эффективности проекта."""
+
+    @staticmethod
+    def calculate_active_contributors(
+        db: Session,
+        project_id: int,
+        period_start: datetime,
+        period_end: datetime
+    ) -> Optional[Dict]:
+        """
+        Рассчитать метрику активных участников проекта.
+        Calculate active contributors metric for the project.
+        
+        Новое ТЗ: Берем все коммиты за последний месяц и считаем уникальных авторов.
+        Каждый уникальный автор - это активный участник.
+        """
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            return None
+        
+        member_ids = [member.id for member in project.members]
+        
+        # Получить все коммиты за период
+        commits = db.query(Commit).filter(
+            Commit.author_id.in_(member_ids),
+            Commit.committed_at.between(period_start, period_end)
+        ).all()
+        
+        if not commits:
+            return {
+                "project_id": project_id,
+                "project_name": project.name,
+                "active_contributors": 0,
+                "total_commits": 0,
+                "period_start": period_start,
+                "period_end": period_end,
+            }
+        
+        # Подсчитать уникальных авторов
+        unique_authors = set()
+        for commit in commits:
+            if commit.author_id:
+                unique_authors.add(commit.author_id)
+        
+        active_contributors = len(unique_authors)
+        total_commits = len(commits)
+        
+        return {
+            "project_id": project_id,
+            "project_name": project.name,
+            "active_contributors": active_contributors,
+            "total_commits": total_commits,
+            "avg_commits_per_contributor": round(total_commits / active_contributors, 2) if active_contributors > 0 else 0,
+            "period_start": period_start,
+            "period_end": period_end,
+        }
+
+    @staticmethod
+    def calculate_commits_per_person(
+        db: Session,
+        project_id: int,
+        period_start: datetime,
+        period_end: datetime
+    ) -> Optional[Dict]:
+        """
+        Рассчитать количество коммитов на каждого участника для оценки экспертности.
+        Calculate commit count per person to understand expertise level.
+        
+        Новое ТЗ: Количество коммитов на того или иного человека,
+        чтобы понимать уровень экспертности по проекту.
+        """
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            return None
+        
+        member_ids = [member.id for member in project.members]
+        
+        # Получить все коммиты за период, сгруппированные по автору
+        commit_counts = db.query(
+            Commit.author_id,
+            func.count(Commit.id).label('commit_count'),
+            func.sum(Commit.insertions + Commit.deletions).label('lines_changed')
+        ).filter(
+            Commit.author_id.in_(member_ids),
+            Commit.committed_at.between(period_start, period_end)
+        ).group_by(Commit.author_id).all()
+        
+        # Получить информацию об участниках
+        members = db.query(ProjectMember).filter(ProjectMember.id.in_(member_ids)).all()
+        member_map = {m.id: m for m in members}
+        
+        # Сформировать список участников с метриками
+        contributors = []
+        for author_id, commit_count, lines_changed in commit_counts:
+            member = member_map.get(author_id)
+            if member:
+                # Определить уровень экспертности на основе количества коммитов
+                if commit_count >= 50:
+                    expertise_level = "expert"
+                elif commit_count >= 20:
+                    expertise_level = "advanced"
+                elif commit_count >= 5:
+                    expertise_level = "intermediate"
+                else:
+                    expertise_level = "beginner"
+                
+                contributors.append({
+                    "author_id": author_id,
+                    "author_name": member.name,
+                    "author_email": member.email,
+                    "commit_count": commit_count,
+                    "lines_changed": int(lines_changed) if lines_changed else 0,
+                    "expertise_level": expertise_level
+                })
+        
+        # Сортировать по количеству коммитов (убывание)
+        contributors.sort(key=lambda x: x["commit_count"], reverse=True)
+        
+        return {
+            "project_id": project_id,
+            "project_name": project.name,
+            "contributors": contributors,
+            "total_contributors": len(contributors),
+            "period_start": period_start,
+            "period_end": period_end,
+        }
 
     @staticmethod
     def calculate_effectiveness_score(
@@ -23,6 +153,8 @@ class ProjectEffectivenessService:
         """
         Рассчитать комплексную оценку эффективности проекта.
         Calculate comprehensive project effectiveness score.
+        
+        Новое ТЗ: Оценка основана только на данных коммитов (без PR и задач).
         """
         project = db.query(Project).filter(Project.id == project_id).first()
         if not project:
@@ -37,26 +169,26 @@ class ProjectEffectivenessService:
             Commit.committed_at.between(period_start, period_end)
         ).all()
         
-        # Получить PR проекта
-        prs = db.query(PullRequest).filter(
-            PullRequest.project_id == project_id,
-            PullRequest.created_at.between(period_start, period_end)
-        ).all()
-        
-        # Получить задачи проекта
-        tasks = db.query(Task).filter(
-            Task.project_id == project_id,
-            Task.created_at.between(period_start, period_end)
-        ).all()
+        if not commits:
+            return {
+                "project_id": project_id,
+                "project_name": project.name,
+                "effectiveness_score": 0.0,
+                "trend": "stable",
+                "total_commits": 0,
+                "active_contributors": 0,
+                "after_hours_percentage": 0.0,
+                "weekend_percentage": 0.0,
+                "has_alert": False,
+                "alert_message": None,
+                "alert_severity": None,
+                "period_start": period_start,
+                "period_end": period_end,
+            }
         
         # Рассчитать метрики
         total_commits = len(commits)
-        total_prs = len(prs)
         active_contributors = len(set(c.author_id for c in commits if c.author_id))
-        
-        # Среднее время первого ревью для PR
-        pr_review_times = [pr.time_to_first_review for pr in prs if pr.time_to_first_review]
-        avg_pr_review_time = sum(pr_review_times) / len(pr_review_times) if pr_review_times else 0
         
         # Метрики work-life balance
         after_hours_commits = [c for c in commits if c.is_after_hours]
@@ -72,37 +204,26 @@ class ProjectEffectivenessService:
         # Чем выше, тем лучше
         score_components = []
         
-        # 1. Активность коммитов (макс 20 баллов)
-        commit_score = min(20, (total_commits / max(len(member_ids), 1)) * 4) if member_ids else 0
+        # 1. Активность коммитов (макс 30 баллов)
+        commit_score = min(30, (total_commits / max(len(member_ids), 1)) * 6) if member_ids else 0
         score_components.append(commit_score)
         
-        # 2. Производительность PR (макс 20 баллов)
-        pr_score = min(20, (total_prs / max(len(member_ids), 1)) * 8) if member_ids else 0
-        score_components.append(pr_score)
-        
-        # 3. Эффективность ревью (макс 20 баллов) - быстрее лучше
-        if avg_pr_review_time > 0:
-            review_score = max(0, 20 - (avg_pr_review_time / 24) * 4)
-        else:
-            review_score = 12
-        score_components.append(review_score)
-        
-        # 4. Вовлеченность команды (макс 20 баллов)
-        collab_score = (active_contributors / max(len(member_ids), 1)) * 20 if member_ids else 0
+        # 2. Вовлеченность команды (макс 30 баллов)
+        collab_score = (active_contributors / max(len(member_ids), 1)) * 30 if member_ids else 0
         score_components.append(collab_score)
         
-        # 5. Work-life balance (макс 10 баллов) - штраф за переработки
+        # 3. Work-life balance (макс 20 баллов) - штраф за переработки
         if after_hours_percentage > 30 or weekend_percentage > 20:
-            work_life_score = max(0, 10 - (after_hours_percentage / 10))
+            work_life_score = max(0, 20 - (after_hours_percentage / 10))
         else:
-            work_life_score = 10
+            work_life_score = 20
         score_components.append(work_life_score)
         
-        # 6. Качество кода (макс 10 баллов) - штраф за высокий churn
+        # 4. Качество кода (макс 20 баллов) - штраф за высокий churn
         if churn_rate > 25:
-            quality_score = max(0, 10 - (churn_rate / 10))
+            quality_score = max(0, 20 - (churn_rate / 10))
         else:
-            quality_score = 10
+            quality_score = 20
         score_components.append(quality_score)
         
         effectiveness_score = sum(score_components)
@@ -117,15 +238,11 @@ class ProjectEffectivenessService:
         
         if effectiveness_score < 40:
             has_alert = True
-            alert_message = "Эффективность проекта ниже целевого уровня. Проверьте узкие места и загруженность команды."
+            alert_message = "Эффективность проекта ниже целевого уровня. Проверьте активность команды."
             alert_severity = "critical"
         elif effectiveness_score < 60:
             has_alert = True
             alert_message = "Эффективность проекта может быть улучшена. Рассмотрите оптимизацию процессов."
-            alert_severity = "warning"
-        elif avg_pr_review_time > 48:
-            has_alert = True
-            alert_message = "Время ревью PR слишком велико. Рассмотрите увеличение доступности ревьюеров."
             alert_severity = "warning"
         elif after_hours_percentage > 30:
             has_alert = True
@@ -146,8 +263,6 @@ class ProjectEffectivenessService:
             "effectiveness_score": round(effectiveness_score, 2),
             "trend": trend,
             "total_commits": total_commits,
-            "total_prs": total_prs,
-            "avg_pr_review_time": round(avg_pr_review_time, 2),
             "active_contributors": active_contributors,
             "after_hours_percentage": round(after_hours_percentage, 2),
             "weekend_percentage": round(weekend_percentage, 2),
