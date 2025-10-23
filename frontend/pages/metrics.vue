@@ -58,111 +58,6 @@
         </div>
       </div>
 
-      <!-- Bottleneck Analysis -->
-      <div class="card">
-        <h3>🚧 Анализ узких мест</h3>
-        <div class="bottleneck-info" v-if="bottleneckStage !== 'none'">
-          <span class="bottleneck-label">Этап с самым долгим средним временем:</span>
-          <div class="bottleneck-stage">
-            <span class="stage-icon">🔍</span>
-            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }} → ~{{ bottleneckTime.toFixed(1) }}ч</span>
-          </div>
-        </div>
-        <div v-else class="bottleneck-info">
-          <p>✓ Нет явных узких мест в workflow</p>
-        </div>
-        <div class="stage-breakdown">
-          <h4>Распределение по этапам:</h4>
-          <div class="stage-item">
-            <span class="stage-label">📋 TODO</span>
-            <div class="stage-bar">
-              <div class="bar-fill" :style="{ width: getStageBarWidth(stageTimes.todo) + '%' }"></div>
-            </div>
-            <span class="stage-time">{{ formatStageTime(stageTimes.todo) }}</span>
-          </div>
-          <div class="stage-item">
-            <span class="stage-label">💻 Разработка</span>
-            <div class="stage-bar">
-              <div class="bar-fill" :style="{ width: getStageBarWidth(stageTimes.development) + '%' }"></div>
-            </div>
-            <span class="stage-time">{{ formatStageTime(stageTimes.development) }}</span>
-          </div>
-          <div class="stage-item">
-            <span class="stage-label">👁️ Ревью</span>
-            <div class="stage-bar">
-              <div class="bar-fill" :class="{ warning: bottleneckStage === 'review' }" :style="{ width: getStageBarWidth(stageTimes.review) + '%' }"></div>
-            </div>
-            <span class="stage-time">{{ formatStageTime(stageTimes.review) }}</span>
-          </div>
-          <div class="stage-item">
-            <span class="stage-label">🧪 Тестирование</span>
-            <div class="stage-bar">
-              <div class="bar-fill" :class="{ warning: bottleneckStage === 'testing' }" :style="{ width: getStageBarWidth(stageTimes.testing) + '%' }"></div>
-            </div>
-            <span class="stage-time">{{ formatStageTime(stageTimes.testing) }}</span>
-          </div>
-        </div>
-        <div class="recommendations">
-          <h4>💡 Рекомендации</h4>
-          <ul>
-            <li>⚠️ Ревью кода занимает более 2 дней в среднем</li>
-            <li>Рассмотрите: увеличение мощности ревьюеров или установку SLA для ревью</li>
-          </ul>
-        </div>
-
-        <!-- PR/MR Needing Attention Table -->
-        <div class="prs-needing-attention">
-          <h4>⤵️ Запросы</h4>
-          <div v-if="prsNeedingAttention.length === 0" class="empty-prs">
-            <p>✓ Нет открытых запросов на ревью</p>
-          </div>
-          <div v-else class="prs-table">
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Название</th>
-                  <th>Время на ревью</th>
-                  <th>Циклы ревью</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="pr in prsNeedingAttention" :key="pr.pr_id">
-                  <td class="indicator-cell">{{ pr.indicator }}</td>
-                  <td class="pr-title">{{ pr.title }}</td>
-                  <td class="time-cell">{{ pr.time_in_review_hours }}ч</td>
-                  <td class="cycles-cell">{{ pr.review_cycles }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <p class="prs-note">Показаны первые {{ prsNeedingAttention.length }} из {{ totalPRsNeedingAttention }} запросов в порядке убывания по времени на ревью</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Work-Life Balance -->
-      <div class="card">
-        <h3>💼 Забота о сотрудниках</h3>
-        <p>Отслеживание переработок и активности вне рабочего времени</p>
-        <div class="metric-group">
-          <div class="metric-item">
-            <span class="metric-label">Коммиты после рабочего времени</span>
-            <span class="metric-value">{{ afterHoursPercentage }}% <span class="trend" :class="afterHoursPercentage > 30 ? 'up' : 'stable'">{{ afterHoursPercentage > 30 ? '↑' : '→' }}</span></span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Коммиты в выходные</span>
-            <span class="metric-value">{{ weekendPercentage }}% <span class="trend" :class="weekendPercentage > 20 ? 'up' : 'stable'">{{ weekendPercentage > 20 ? '↑' : '→' }}</span></span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Пики активности</span>
-            <span class="metric-value">{{ peakHours }}</span>
-          </div>
-        </div>
-        <div v-if="afterHoursPercentage > 30 || weekendPercentage > 20" class="alert alert-warning">
-          <strong>⚠️</strong> Обнаружена высокая активность вне рабочего времени. Проверьте нагрузку на команду.
-        </div>
-      </div>
-
       <!-- Technical Debt Analysis -->
       <div class="card">
         <h3>🔧 Анализ технического долга</h3>
@@ -202,6 +97,29 @@
             <li>TODO в ревью растут - рассмотрите оформление их в отдельные тикеты</li>
             <li v-if="churnRate > 25">⚠️ Высокий уровень переписывания кода - проверьте качество планирования</li>
           </ul>
+        </div>
+      </div>
+
+      <!-- Work-Life Balance -->
+      <div class="card">
+        <h3>💼 Забота о сотрудниках</h3>
+        <p>Отслеживание переработок и активности вне рабочего времени</p>
+        <div class="metric-group">
+          <div class="metric-item">
+            <span class="metric-label">Коммиты после рабочего времени</span>
+            <span class="metric-value">{{ afterHoursPercentage }}% <span class="trend" :class="afterHoursPercentage > 30 ? 'up' : 'stable'">{{ afterHoursPercentage > 30 ? '↑' : '→' }}</span></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Коммиты в выходные</span>
+            <span class="metric-value">{{ weekendPercentage }}% <span class="trend" :class="weekendPercentage > 20 ? 'up' : 'stable'">{{ weekendPercentage > 20 ? '↑' : '→' }}</span></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Пики активности</span>
+            <span class="metric-value">{{ peakHours }}</span>
+          </div>
+        </div>
+        <div v-if="afterHoursPercentage > 30 || weekendPercentage > 20" class="alert alert-warning">
+          <strong>⚠️</strong> Обнаружена высокая активность вне рабочего времени. Проверьте нагрузку на команду.
         </div>
       </div>
 

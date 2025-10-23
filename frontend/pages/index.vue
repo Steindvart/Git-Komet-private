@@ -105,13 +105,6 @@
             </div>
           </div>
           <div class="analysis-item">
-            <span class="analysis-icon">🚧</span>
-            <div class="analysis-info">
-              <strong>Узкие места</strong>
-              <p>Выявление замедлений в workflow и рекомендации</p>
-            </div>
-          </div>
-          <div class="analysis-item">
             <span class="analysis-icon">💼</span>
             <div class="analysis-info">
               <strong>Забота о сотрудниках</strong>
