@@ -196,3 +196,23 @@ class BottleneckAnalysis(BaseModel):
     stage_times: Optional[dict] = None
     period_start: datetime
     period_end: datetime
+
+
+class PRNeedingAttention(BaseModel):
+    """PR/MR, требующий внимания / PR/MR needing attention"""
+    pr_id: int
+    external_id: str
+    title: str
+    author_id: Optional[int] = None
+    created_at: datetime
+    time_in_review_hours: float
+    indicator: str  # ☀️, 🌧️, 🌩️
+    has_reviews: bool
+    review_cycles: int
+
+
+class PRsNeedingAttentionResponse(BaseModel):
+    """Ответ со списком PR/MR, требующих внимания / Response with list of PRs needing attention"""
+    project_id: int
+    prs: List[PRNeedingAttention]
+    total_count: int

@@ -109,6 +109,35 @@
             <li>Рассмотрите: увеличение мощности ревьюеров или установку SLA для ревью</li>
           </ul>
         </div>
+
+        <!-- PR/MR Needing Attention Table -->
+        <div class="prs-needing-attention">
+          <h4>⤵️ Запросы</h4>
+          <div v-if="prsNeedingAttention.length === 0" class="empty-prs">
+            <p>✓ Нет открытых запросов на ревью</p>
+          </div>
+          <div v-else class="prs-table">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Название</th>
+                  <th>Время на ревью (часов)</th>
+                  <th>Циклы ревью</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="pr in prsNeedingAttention" :key="pr.pr_id">
+                  <td class="indicator-cell">{{ pr.indicator }}</td>
+                  <td class="pr-title">{{ pr.title }}</td>
+                  <td class="time-cell">{{ pr.time_in_review_hours }}ч</td>
+                  <td class="cycles-cell">{{ pr.review_cycles }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="prs-note">Показаны первые {{ prsNeedingAttention.length }} из {{ totalPRsNeedingAttention }} запросов в порядке убывания по времени на ревью</p>
+          </div>
+        </div>
       </div>
 
       <!-- Work-Life Balance -->
@@ -224,6 +253,10 @@ const stageTimes = ref({
   testing: 0
 })
 
+// PRs needing attention
+const prsNeedingAttention = ref([])
+const totalPRsNeedingAttention = ref(0)
+
 onMounted(async () => {
   // Check if project is passed via query parameter
   const route = useRoute()
@@ -289,6 +322,11 @@ const loadAllMetrics = async () => {
       review: 0,
       testing: 0
     }
+
+    // Load PRs needing attention (all PRs, min_hours=0)
+    const prsData = await api.fetchPRsNeedingAttention(selectedProjectId.value, 0, 5)
+    prsNeedingAttention.value = prsData.prs || []
+    totalPRsNeedingAttention.value = prsData.total_count || 0
 
   } catch (error) {
     console.error('Error loading metrics:', error)
@@ -678,5 +716,102 @@ const formatStageTime = (hours: number) => {
 .note {
   font-size: 0.875rem;
   margin-top: 0.5rem;
+}
+
+/* PR/MR Needing Attention Styles */
+.prs-needing-attention {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: var(--bg-tertiary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
+}
+
+.prs-needing-attention h4 {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.empty-prs {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.prs-table {
+  overflow-x: auto;
+}
+
+.prs-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--bg-primary);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.prs-table thead {
+  background-color: var(--bg-secondary);
+}
+
+.prs-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-primary);
+}
+
+.prs-table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.prs-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.prs-table tbody tr:hover {
+  background-color: var(--bg-tertiary);
+  transition: background-color 0.2s ease;
+}
+
+.indicator-cell {
+  font-size: 1.5rem;
+  text-align: center;
+  width: 80px;
+}
+
+.pr-title {
+  font-weight: 500;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time-cell {
+  font-weight: 600;
+  color: var(--danger);
+  text-align: center;
+  width: 150px;
+}
+
+.cycles-cell {
+  text-align: center;
+  width: 100px;
+}
+
+.prs-note {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 </style>
