@@ -21,7 +21,7 @@
     </main>
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2024 Git-Komet. Система анализа эффективности проектов разработки.</p>
+        <p>&copy; 2025 Git-Komet. Система анализа эффективности проектов разработки.</p>
       </div>
     </footer>
   </div>
