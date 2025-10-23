@@ -9,7 +9,6 @@
           <div class="nav-links">
             <NuxtLink to="/">Главная</NuxtLink>
             <NuxtLink to="/repositories">Проекты</NuxtLink>
-            <NuxtLink to="/teams">Команды</NuxtLink>
             <NuxtLink to="/metrics">Аналитика</NuxtLink>
           </div>
         </div>
@@ -22,7 +21,7 @@
     </main>
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2024 Git-Komet. Система анализа эффективности команд разработки.</p>
+        <p>&copy; 2024 Git-Komet. Система анализа эффективности проектов разработки.</p>
       </div>
     </footer>
   </div>

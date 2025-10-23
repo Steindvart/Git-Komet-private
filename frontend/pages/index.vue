@@ -3,6 +3,22 @@
     <h1>Панель управления Git-Komet</h1>
     <p class="subtitle">Умный трекер разработки через анализ Git-метрик</p>
     
+    <!-- Project Selector -->
+    <div class="project-selector">
+      <label for="project-select">Выберите проект для анализа:</label>
+      <select 
+        id="project-select" 
+        v-model="selectedProjectId" 
+        @change="onProjectChange"
+        :disabled="loading"
+      >
+        <option :value="null">-- Выберите проект --</option>
+        <option v-for="project in projects" :key="project.id" :value="project.id">
+          {{ project.name }}
+        </option>
+      </select>
+    </div>
+    
     <div class="dashboard-grid">
       <div class="card">
         <h3>📊 Обзор</h3>
@@ -16,22 +32,36 @@
         </ul>
       </div>
 
-      <div class="card">
-        <h3>🎯 Быстрая статистика</h3>
+      <div class="card" v-if="selectedProjectId && projectMetrics">
+        <h3>🎯 Статистика проекта</h3>
         <div class="stats">
           <div class="stat-item">
-            <span class="stat-label">Проекты</span>
-            <span class="stat-value">{{ stats.projects }}</span>
+            <span class="stat-label">Эффективность</span>
+            <span class="stat-value">{{ projectMetrics.effectiveness_score }}/100</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Команды</span>
-            <span class="stat-value">{{ stats.teams }}</span>
+            <span class="stat-label">Коммиты</span>
+            <span class="stat-value">{{ projectMetrics.total_commits }}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Средняя эффективность</span>
-            <span class="stat-value">{{ stats.avgEffectiveness }}/100</span>
+            <span class="stat-label">PR</span>
+            <span class="stat-value">{{ projectMetrics.total_prs }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Участники</span>
+            <span class="stat-value">{{ projectMetrics.active_contributors }}</span>
           </div>
         </div>
+        <div v-if="projectMetrics.has_alert" class="alert" :class="`alert-${projectMetrics.alert_severity}`">
+          <strong>{{ projectMetrics.alert_severity === 'critical' ? '🚨' : '⚠️' }}</strong>
+          {{ projectMetrics.alert_message }}
+        </div>
+      </div>
+      
+      <div class="card" v-else-if="!selectedProjectId">
+        <h3>🎯 Начните работу</h3>
+        <p>Выберите проект из списка выше для просмотра статистики и метрик</p>
+        <p style="margin-top: 1rem; color: var(--text-secondary);">Всего проектов: {{ projects.length }}</p>
       </div>
 
       <div class="card">
@@ -40,11 +70,8 @@
           <NuxtLink to="/repositories" class="btn btn-primary">
             Управление проектами
           </NuxtLink>
-          <NuxtLink to="/teams" class="btn btn-secondary">
-            Управление командами
-          </NuxtLink>
-          <NuxtLink to="/metrics" class="btn btn-secondary">
-            Просмотр аналитики
+          <NuxtLink to="/metrics" class="btn btn-secondary" v-if="selectedProjectId">
+            Детальная аналитика
           </NuxtLink>
         </div>
       </div>
@@ -121,23 +148,113 @@
 </template>
 
 <script setup lang="ts">
-const stats = ref({
-  projects: 0,
-  teams: 0,
-  avgEffectiveness: 0
-})
+const api = useApi()
+const projects = ref([])
+const selectedProjectId = ref<number | null>(null)
+const projectMetrics = ref<any>(null)
+const loading = ref(false)
 
 onMounted(async () => {
-  // В реальном приложении получаем данные из API
-  // Пока используем заглушки
+  await loadProjects()
 })
+
+const loadProjects = async () => {
+  loading.value = true
+  try {
+    projects.value = await api.fetchProjects()
+    // Автоматически выбрать первый проект, если есть
+    if (projects.value.length > 0) {
+      selectedProjectId.value = projects.value[0].id
+      await loadProjectMetrics()
+    }
+  } catch (error) {
+    console.error('Error loading projects:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const onProjectChange = async () => {
+  if (selectedProjectId.value) {
+    await loadProjectMetrics()
+  } else {
+    projectMetrics.value = null
+  }
+}
+
+const loadProjectMetrics = async () => {
+  if (!selectedProjectId.value) return
+  
+  loading.value = true
+  try {
+    projectMetrics.value = await api.fetchProjectMetrics(selectedProjectId.value)
+  } catch (error) {
+    console.error('Error loading project metrics:', error)
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>
 .subtitle {
   color: var(--text-secondary);
   font-size: 1.125rem;
+  margin-bottom: 1.5rem;
+}
+
+.project-selector {
   margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: var(--bg-secondary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
+}
+
+.project-selector label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.project-selector select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 0.375rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.project-selector select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.project-selector select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.alert {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.alert-warning {
+  background-color: rgba(210, 153, 34, 0.15);
+  border-left: 4px solid var(--warning);
+  color: var(--text-primary);
+}
+
+.alert-critical {
+  background-color: rgba(248, 81, 73, 0.15);
+  border-left: 4px solid var(--danger);
+  color: var(--text-primary);
 }
 
 .dashboard-grid {

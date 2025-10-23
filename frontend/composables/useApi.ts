@@ -47,105 +47,26 @@ export const useApi = () => {
     }
   }
 
-  const generateMockData = async (projectId: number, teamId: number) => {
-    try {
-      const response = await fetch(`${apiBase}/projects/${projectId}/generate-mock-data?team_id=${teamId}`, {
-        method: 'POST'
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.detail || 'Failed to generate mock data')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Error generating mock data:', error)
-      throw error
-    }
-  }
-
-  // Teams API
-  const fetchTeams = async () => {
-    try {
-      const response = await fetch(`${apiBase}/teams`)
-      return await response.json()
-    } catch (error) {
-      console.error('Error fetching teams:', error)
-      return []
-    }
-  }
-
-  const createTeam = async (data: any) => {
-    try {
-      const response = await fetch(`${apiBase}/teams`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.detail || 'Failed to create team')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Error creating team:', error)
-      throw error
-    }
-  }
-
-  const deleteTeam = async (id: number) => {
-    try {
-      const response = await fetch(`${apiBase}/teams/${id}`, {
-        method: 'DELETE'
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.detail || 'Failed to delete team')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Error deleting team:', error)
-      throw error
-    }
-  }
-
-  const addTeamMember = async (data: any) => {
-    try {
-      const response = await fetch(`${apiBase}/teams/members`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.detail || 'Failed to add team member')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Error adding team member:', error)
-      throw error
-    }
-  }
-
-  // Metrics API
-  const fetchTeamMetrics = async (teamId: number, periodDays: number = 30) => {
+  // Project Metrics API
+  const fetchProjectMetrics = async (projectId: number, periodDays: number = 30) => {
     try {
       const response = await fetch(
-        `${apiBase}/metrics/team/${teamId}/effectiveness?period_days=${periodDays}`
+        `${apiBase}/metrics/project/${projectId}/effectiveness?period_days=${periodDays}`
       )
       if (!response.ok) {
-        throw new Error('Failed to fetch team metrics')
+        throw new Error('Failed to fetch project metrics')
       }
       return await response.json()
     } catch (error) {
-      console.error('Error fetching team metrics:', error)
+      console.error('Error fetching project metrics:', error)
       throw error
     }
   }
 
-  const fetchTechnicalDebt = async (teamId: number, periodDays: number = 30) => {
+  const fetchProjectTechnicalDebt = async (projectId: number, periodDays: number = 30) => {
     try {
       const response = await fetch(
-        `${apiBase}/metrics/team/${teamId}/technical-debt?period_days=${periodDays}`
+        `${apiBase}/metrics/project/${projectId}/technical-debt?period_days=${periodDays}`
       )
       if (!response.ok) {
         throw new Error('Failed to fetch technical debt')
@@ -157,10 +78,10 @@ export const useApi = () => {
     }
   }
 
-  const fetchBottlenecks = async (teamId: number, periodDays: number = 30) => {
+  const fetchProjectBottlenecks = async (projectId: number, periodDays: number = 30) => {
     try {
       const response = await fetch(
-        `${apiBase}/metrics/team/${teamId}/bottlenecks?period_days=${periodDays}`
+        `${apiBase}/metrics/project/${projectId}/bottlenecks?period_days=${periodDays}`
       )
       if (!response.ok) {
         throw new Error('Failed to fetch bottlenecks')
@@ -172,20 +93,31 @@ export const useApi = () => {
     }
   }
 
+  const fetchProjectEmployeeCare = async (projectId: number, periodDays: number = 30) => {
+    try {
+      const response = await fetch(
+        `${apiBase}/metrics/project/${projectId}/employee-care?period_days=${periodDays}`
+      )
+      if (!response.ok) {
+        throw new Error('Failed to fetch employee care metrics')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching employee care metrics:', error)
+      throw error
+    }
+  }
+
+
   return {
     // Projects
     fetchProjects,
     createProject,
     deleteProject,
-    generateMockData,
-    // Teams
-    fetchTeams,
-    createTeam,
-    deleteTeam,
-    addTeamMember,
-    // Metrics
-    fetchTeamMetrics,
-    fetchTechnicalDebt,
-    fetchBottlenecks
+    // Project Metrics
+    fetchProjectMetrics,
+    fetchProjectTechnicalDebt,
+    fetchProjectBottlenecks,
+    fetchProjectEmployeeCare
   }
 }

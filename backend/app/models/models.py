@@ -5,7 +5,7 @@ from app.db.session import Base
 
 
 class Project(Base):
-    """Project - represents a Git repository"""
+    """Проект - представляет Git-репозиторий / Project - represents a Git repository"""
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -16,28 +16,19 @@ class Project(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
+    members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
     pull_requests = relationship("PullRequest", back_populates="project", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
+    project_metrics = relationship("ProjectMetric", back_populates="project", cascade="all, delete-orphan")
+    technical_debt_metrics = relationship("TechnicalDebtMetric", back_populates="project", cascade="all, delete-orphan")
 
 
-class Team(Base):
-    __tablename__ = "teams"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
-    description = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
-    team_metrics = relationship("TeamMetric", back_populates="team", cascade="all, delete-orphan")
-
-
-class TeamMember(Base):
-    __tablename__ = "team_members"
+class ProjectMember(Base):
+    """Участник проекта / Project member"""
+    __tablename__ = "team_members"  # Сохраняем имя таблицы для совместимости с данными
 
     id = Column(Integer, primary_key=True, index=True)
-    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     external_id = Column(String, index=True, nullable=True)  # External user ID
     email = Column(String, nullable=False)
     name = Column(String, nullable=False)
@@ -45,7 +36,7 @@ class TeamMember(Base):
     joined_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
-    team = relationship("Team", back_populates="members")
+    project = relationship("Project", back_populates="members")
     commits = relationship("Commit", back_populates="author")
     pull_requests = relationship("PullRequest", foreign_keys="PullRequest.author_id", back_populates="author")
     reviews = relationship("CodeReview", back_populates="reviewer")
@@ -79,7 +70,7 @@ class Commit(Base):
     is_weekend = Column(Boolean, default=False)  # Committed on weekend
     
     # Relationships
-    author = relationship("TeamMember", back_populates="commits")
+    author = relationship("ProjectMember", back_populates="commits")
 
 
 class PullRequest(Base):
@@ -110,7 +101,7 @@ class PullRequest(Base):
     
     # Relationships
     project = relationship("Project", back_populates="pull_requests")
-    author = relationship("TeamMember", foreign_keys=[author_id], back_populates="pull_requests")
+    author = relationship("ProjectMember", foreign_keys=[author_id], back_populates="pull_requests")
     reviews = relationship("CodeReview", back_populates="pull_request", cascade="all, delete-orphan")
 
 
@@ -129,7 +120,7 @@ class CodeReview(Base):
     
     # Relationships
     pull_request = relationship("PullRequest", back_populates="reviews")
-    reviewer = relationship("TeamMember", back_populates="reviews")
+    reviewer = relationship("ProjectMember", back_populates="reviews")
 
 
 class Task(Base):
@@ -157,17 +148,17 @@ class Task(Base):
     
     # Relationships
     project = relationship("Project", back_populates="tasks")
-    assignee = relationship("TeamMember", back_populates="tasks")
+    assignee = relationship("ProjectMember", back_populates="tasks")
 
 
-class TeamMetric(Base):
-    """Calculated team effectiveness metrics"""
-    __tablename__ = "team_metrics"
+class ProjectMetric(Base):
+    """Рассчитанные метрики эффективности проекта / Calculated project effectiveness metrics"""
+    __tablename__ = "project_metrics"
 
     id = Column(Integer, primary_key=True, index=True)
-    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
-    metric_type = Column(String, nullable=False)  # effectiveness_score, technical_debt, bottleneck, etc.
-    metric_value = Column(String, nullable=False)  # JSON string for complex values
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    metric_type = Column(String, nullable=False)  # effectiveness_score, technical_debt, bottleneck, employee_care, etc.
+    metric_value = Column(Text, nullable=False)  # JSON string for complex values
     score = Column(Float, nullable=True)  # Normalized score 0-100
     trend = Column(String, nullable=True)  # improving, stable, declining
     period_start = Column(DateTime, nullable=False)
@@ -180,16 +171,15 @@ class TeamMetric(Base):
     alert_severity = Column(String, nullable=True)  # info, warning, critical
     
     # Relationships
-    team = relationship("Team", back_populates="team_metrics")
+    project = relationship("Project", back_populates="project_metrics")
 
 
 class TechnicalDebtMetric(Base):
-    """Technical debt tracking over time"""
+    """Отслеживание технического долга / Technical debt tracking over time"""
     __tablename__ = "technical_debt_metrics"
 
     id = Column(Integer, primary_key=True, index=True)
-    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     
     # Metrics
     test_coverage = Column(Float, nullable=True)  # Percentage
@@ -201,3 +191,6 @@ class TechnicalDebtMetric(Base):
     measured_at = Column(DateTime, nullable=False)
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
+    
+    # Relationships
+    project = relationship("Project", back_populates="technical_debt_metrics")
