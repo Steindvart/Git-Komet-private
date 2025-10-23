@@ -12,6 +12,13 @@ from app.services.repository_technical_debt_service import RepositoryTechnicalDe
 import json
 
 
+def datetime_converter(o):
+    """Convert datetime to ISO format string for JSON serialization."""
+    if isinstance(o, datetime):
+        return o.isoformat()
+    raise TypeError(f"Object of type {type(o)} is not JSON serializable")
+
+
 class ProjectAggregatedService:
     """Сервис для расчёта агрегированных метрик проекта на основе его репозиториев."""
 
@@ -149,7 +156,7 @@ class ProjectAggregatedService:
         metric = ProjectMetric(
             project_id=project_id,
             metric_type=metric_type,
-            metric_value=json.dumps(metric_data),
+            metric_value=json.dumps(metric_data, default=datetime_converter),
             score=score,
             trend=trend,
             period_start=period_start,

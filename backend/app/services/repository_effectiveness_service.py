@@ -10,6 +10,13 @@ from app.models.models import Repository, ProjectMember, Commit, RepositoryMetri
 import json
 
 
+def datetime_converter(o):
+    """Convert datetime to ISO format string for JSON serialization."""
+    if isinstance(o, datetime):
+        return o.isoformat()
+    raise TypeError(f"Object of type {type(o)} is not JSON serializable")
+
+
 class RepositoryEffectivenessService:
     """Сервис для расчёта общей оценки эффективности репозитория."""
 
@@ -237,7 +244,7 @@ class RepositoryEffectivenessService:
         metric = RepositoryMetric(
             repository_id=repository_id,
             metric_type=metric_type,
-            metric_value=json.dumps(metric_data),
+            metric_value=json.dumps(metric_data, default=datetime_converter),
             score=score,
             trend=trend,
             period_start=period_start,
