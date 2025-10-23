@@ -1,16 +1,19 @@
 """
 Сервис для анализа технического долга проекта.
 Service for analyzing project technical debt.
+
+Новое ТЗ: Доступны только git коммиты и их diff.
+Технический долг теперь анализируется ТОЛЬКО по TODO комментариям из diff коммитов.
 """
 from typing import Dict, List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.models.models import Project, ProjectMember, Commit, PullRequest, CodeReview, TechnicalDebtMetric
+from app.models.models import Project, ProjectMember, Commit, TechnicalDebtMetric
 import json
 
 
 class ProjectTechnicalDebtService:
-    """Сервис для анализа технического долга проекта."""
+    """Сервис для анализа технического долга проекта на основе TODO комментариев."""
 
     @staticmethod
     def analyze_technical_debt(
@@ -20,8 +23,11 @@ class ProjectTechnicalDebtService:
         period_end: datetime
     ) -> Optional[Dict]:
         """
-        Анализ технического долга проекта.
-        Analyze project technical debt.
+        Анализ технического долга проекта на основе TODO комментариев в коммитах.
+        Analyze project technical debt based on TODO comments in commits.
+        
+        Новое ТЗ: Фокус ТОЛЬКО на TODO комментариях из diff коммитов.
+        Убрали: покрытие тестами, метрики ревью, code churn.
         """
         project = db.query(Project).filter(Project.id == project_id).first()
         if not project:
@@ -29,121 +35,68 @@ class ProjectTechnicalDebtService:
         
         member_ids = [member.id for member in project.members]
         
-        # Получить коммиты
+        # Получить коммиты за период
         commits = db.query(Commit).filter(
             Commit.author_id.in_(member_ids),
             Commit.committed_at.between(period_start, period_end)
         ).all()
         
-        # Получить PR проекта
-        prs = db.query(PullRequest).filter(
-            PullRequest.project_id == project_id,
-            PullRequest.created_at.between(period_start, period_end)
-        ).all()
+        if not commits:
+            return {
+                "project_id": project_id,
+                "todo_count": 0,
+                "todo_trend": "stable",
+                "technical_debt_score": 0.0,
+                "recommendations": ["Нет коммитов за указанный период для анализа."],
+                "period_start": period_start,
+                "period_end": period_end,
+            }
         
-        # Рассчитать покрытие тестами
-        commits_with_tests = [c for c in commits if c.has_tests]
-        test_coverage = (len(commits_with_tests) / len(commits) * 100) if commits else 0
-        
-        # Определить тренд покрытия тестами (упрощенно)
-        test_coverage_trend = "stable"
-        if test_coverage > 60:
-            test_coverage_trend = "up"
-        elif test_coverage < 40:
-            test_coverage_trend = "down"
-        
-        # Подсчитать TODO в коде
+        # Подсчитать TODO в коде из коммитов
         todo_count = sum(c.todo_count for c in commits)
-        todo_trend = "stable"
+        
+        # Определить тренд TODO
+        # Упрощенная логика: сравниваем с пороговыми значениями
         if todo_count > 50:
-            todo_trend = "up"
-        
-        # Подсчитать TODO в ревью
-        pr_ids = [pr.id for pr in prs]
-        reviews = db.query(CodeReview).filter(
-            CodeReview.pull_request_id.in_(pr_ids)
-        ).all()
-        
-        todo_in_reviews = sum(r.todo_comments for r in reviews)
-        
-        # Рассчитать плотность комментариев в ревью
-        total_review_comments = sum(r.comments_count for r in reviews)
-        review_comment_density = (total_review_comments / len(prs)) if prs else 0
-        
-        # Подсчитать code churn
-        churn_commits = [c for c in commits if c.is_churn]
-        churn_rate = (len(churn_commits) / len(commits) * 100) if commits else 0
+            todo_trend = "up"  # Растет
+        elif todo_count < 10:
+            todo_trend = "down"  # Снижается
+        else:
+            todo_trend = "stable"  # Стабильно
         
         # Рассчитать оценку технического долга (0-100, меньше лучше)
-        debt_components = []
-        
-        # 1. Покрытие тестами (0-30 баллов долга)
-        test_debt = max(0, 30 - (test_coverage / 100 * 30))
-        debt_components.append(test_debt)
-        
-        # 2. TODO в коде (0-20 баллов долга)
-        todo_debt = min(20, (todo_count / 100) * 20)
-        debt_components.append(todo_debt)
-        
-        # 3. TODO в ревью (0-15 баллов долга)
-        review_todo_debt = min(15, (todo_in_reviews / 50) * 15)
-        debt_components.append(review_todo_debt)
-        
-        # 4. Code churn (0-20 баллов долга)
-        churn_debt = min(20, (churn_rate / 100) * 20)
-        debt_components.append(churn_debt)
-        
-        # 5. Качество ревью (0-15 баллов долга)
-        # Слишком мало комментариев = плохо, слишком много = тоже плохо
-        if review_comment_density < 2:
-            review_quality_debt = 15
-        elif review_comment_density > 10:
-            review_quality_debt = 10
-        else:
-            review_quality_debt = 5
-        debt_components.append(review_quality_debt)
-        
-        technical_debt_score = sum(debt_components)
+        # Оценка основана ТОЛЬКО на количестве TODO
+        # 0 TODO = 0 баллов долга (отлично)
+        # 100 TODO = 50 баллов долга
+        # 200+ TODO = 100 баллов долга (критично)
+        technical_debt_score = min(100, (todo_count / 200) * 100)
         
         # Сформировать рекомендации
         recommendations = []
         
-        if test_coverage < 50:
-            recommendations.append("⚠️ Низкое покрытие тестами. Рекомендуется увеличить до 60%+.")
-        elif test_coverage < 70:
-            recommendations.append("Покрытие тестами можно улучшить. Стремитесь к 70%+.")
+        if todo_count == 0:
+            recommendations.append("✓ Отлично! Нет TODO комментариев в коммитах.")
+        elif todo_count <= 10:
+            recommendations.append("✓ Низкий уровень TODO. Продолжайте в том же духе!")
+        elif todo_count <= 30:
+            recommendations.append("Умеренное количество TODO. Рассмотрите планирование их устранения.")
+        elif todo_count <= 50:
+            recommendations.append("⚠️ Заметное количество TODO в коде. Создайте задачи для их устранения.")
+        elif todo_count <= 100:
+            recommendations.append("⚠️ Много TODO в коде. Рекомендуется приоритизировать их устранение.")
         else:
-            recommendations.append("✓ Хорошее покрытие тестами. Продолжайте поддерживать уровень!")
+            recommendations.append("🚨 Критическое количество TODO в коде! Необходим план по систематическому устранению технического долга.")
         
-        if todo_count > 100:
-            recommendations.append("⚠️ Очень много TODO в коде. Создайте задачи для их устранения.")
-        elif todo_count > 50:
-            recommendations.append("Много TODO в коде. Рассмотрите планирование их устранения.")
-        
-        if todo_in_reviews > 30:
-            recommendations.append("⚠️ Много TODO в ревью. Оформляйте их как отдельные задачи.")
-        elif todo_in_reviews > 15:
-            recommendations.append("TODO в ревью растут. Следите за этим показателем.")
-        
-        if churn_rate > 30:
-            recommendations.append("⚠️ Высокий code churn. Проверьте качество планирования и дизайна.")
-        elif churn_rate > 20:
-            recommendations.append("Умеренный code churn. Можно улучшить планирование.")
-        
-        if review_comment_density < 2:
-            recommendations.append("Мало комментариев в ревью. Возможно, ревью недостаточно тщательные.")
-        elif review_comment_density > 10:
-            recommendations.append("Много комментариев в ревью. Возможно, стоит улучшить качество кода до ревью.")
+        # Добавить рекомендацию по тренду
+        if todo_trend == "up":
+            recommendations.append("📈 Количество TODO растет. Необходимо усилить контроль качества кода.")
+        elif todo_trend == "down":
+            recommendations.append("📉 Количество TODO снижается. Отличная работа по устранению технического долга!")
         
         return {
             "project_id": project_id,
-            "test_coverage": round(test_coverage, 2),
-            "test_coverage_trend": test_coverage_trend,
             "todo_count": todo_count,
-            "todo_in_reviews": todo_in_reviews,
             "todo_trend": todo_trend,
-            "churn_rate": round(churn_rate, 2),
-            "review_comment_density": round(review_comment_density, 2),
             "technical_debt_score": round(technical_debt_score, 2),
             "recommendations": recommendations,
             "period_start": period_start,
@@ -161,11 +114,11 @@ class ProjectTechnicalDebtService:
         """Сохранить метрику технического долга в базу данных."""
         metric = TechnicalDebtMetric(
             project_id=project_id,
-            test_coverage=metrics.get("test_coverage"),
-            test_coverage_trend=metrics.get("test_coverage_trend"),
+            test_coverage=None,  # Больше не используется в новом ТЗ
+            test_coverage_trend=None,  # Больше не используется в новом ТЗ
             todo_count=metrics.get("todo_count", 0),
             todo_trend=metrics.get("todo_trend"),
-            review_comment_density=metrics.get("review_comment_density"),
+            review_comment_density=None,  # Больше не используется в новом ТЗ
             measured_at=datetime.utcnow(),
             period_start=period_start,
             period_end=period_end
