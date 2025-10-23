@@ -225,14 +225,20 @@ const bottleneckStage = ref('none')
 const bottleneckTime = ref(0)
 
 onMounted(async () => {
-  await loadProjects()
+  // Check if project is passed via query parameter
+  const route = useRoute()
+  const projectId = route.query.project ? Number(route.query.project) : null
+  await loadProjects(projectId)
 })
 
-const loadProjects = async () => {
+const loadProjects = async (preselectedProjectId: number | null = null) => {
   loading.value = true
   try {
     projects.value = await api.fetchProjects()
-    if (projects.value.length > 0) {
+    if (preselectedProjectId && projects.value.some(p => p.id === preselectedProjectId)) {
+      selectedProjectId.value = preselectedProjectId
+      await loadAllMetrics()
+    } else if (projects.value.length > 0) {
       selectedProjectId.value = projects.value[0].id
       await loadAllMetrics()
     }

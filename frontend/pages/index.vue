@@ -20,19 +20,7 @@
     </div>
     
     <div class="dashboard-grid">
-      <div class="card">
-        <h3>📊 Обзор</h3>
-        <p>Анализируйте эффективность команды через Git-метрики:</p>
-        <ul class="feature-list">
-          <li>✓ Оценка эффективности команд (0-100)</li>
-          <li>✓ Отслеживание технического долга</li>
-          <li>✓ Выявление узких мест</li>
-          <li>✓ Забота о сотрудниках (переработки)</li>
-          <li>✓ Алерты и рекомендации</li>
-        </ul>
-      </div>
-
-      <div class="card" v-if="selectedProjectId && projectMetrics">
+      <div class="card full-width" v-if="selectedProjectId && projectMetrics">
         <h3>🎯 Статистика проекта</h3>
         <div class="stats">
           <div class="stat-item">
@@ -58,25 +46,13 @@
         </div>
       </div>
       
-      <div class="card" v-else-if="!selectedProjectId">
+      <div class="card full-width" v-else-if="!selectedProjectId">
         <h3>🎯 Начните работу</h3>
         <p>Выберите проект из списка выше для просмотра статистики и метрик</p>
         <p style="margin-top: 1rem; color: var(--text-secondary);">Всего проектов: {{ projects.length }}</p>
       </div>
 
-      <div class="card">
-        <h3>🚀 Быстрые действия</h3>
-        <div class="actions">
-          <NuxtLink to="/repositories" class="btn btn-primary">
-            Управление проектами
-          </NuxtLink>
-          <NuxtLink to="/metrics" class="btn btn-secondary" v-if="selectedProjectId">
-            Детальная аналитика
-          </NuxtLink>
-        </div>
-      </div>
-
-      <div class="card">
+      <div class="card full-width">
         <h3>🔍 Типы анализа</h3>
         <div class="analysis-types">
           <div class="analysis-item">
@@ -110,37 +86,15 @@
         </div>
       </div>
 
-      <div class="card full-width">
-        <h3>💡 Начало работы</h3>
-        <div class="getting-started">
-          <div class="step">
-            <span class="step-number">1</span>
-            <div class="step-content">
-              <strong>Добавьте проект</strong>
-              <p>Добавьте Git-репозиторий для анализа</p>
-            </div>
-          </div>
-          <div class="step">
-            <span class="step-number">2</span>
-            <div class="step-content">
-              <strong>Создайте команду</strong>
-              <p>Настройте команду разработки и добавьте участников</p>
-            </div>
-          </div>
-          <div class="step">
-            <span class="step-number">3</span>
-            <div class="step-content">
-              <strong>Сгенерируйте демо-данные</strong>
-              <p>Симулируйте данные (коммиты, PR, ревью, задачи)</p>
-            </div>
-          </div>
-          <div class="step">
-            <span class="step-number">4</span>
-            <div class="step-content">
-              <strong>Просмотрите аналитику</strong>
-              <p>Изучайте метрики, тренды и рекомендации</p>
-            </div>
-          </div>
+      <div class="card">
+        <h3>🚀 Быстрые действия</h3>
+        <div class="actions">
+          <NuxtLink to="/repositories" class="btn btn-primary">
+            Управление проектами
+          </NuxtLink>
+          <NuxtLink :to="`/metrics?project=${selectedProjectId}`" class="btn btn-secondary" v-if="selectedProjectId">
+            Детальная аналитика
+          </NuxtLink>
         </div>
       </div>
     </div>
@@ -206,32 +160,42 @@ const loadProjectMetrics = async () => {
 .project-selector {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background-color: var(--bg-secondary);
-  border-radius: 0.5rem;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-radius: 0.75rem;
   border: 1px solid var(--border-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .project-selector label {
   display: block;
   margin-bottom: 0.75rem;
   font-weight: 600;
+  font-size: 1.125rem;
   color: var(--text-primary);
 }
 
 .project-selector select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 0.375rem;
+  padding: 1rem;
+  border: 2px solid var(--border-primary);
+  border-radius: 0.5rem;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: 1.125rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.project-selector select:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
 }
 
 .project-selector select:focus {
   outline: none;
   border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.2);
 }
 
 .project-selector select:disabled {
@@ -269,8 +233,9 @@ const loadProjectMetrics = async () => {
 }
 
 .stats {
-  display: flex;
-  gap: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
   margin-top: 1rem;
 }
 
@@ -278,18 +243,28 @@ const loadProjectMetrics = async () => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding: 1rem;
+  background-color: var(--bg-tertiary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
 }
 
 .stat-label {
   font-size: 0.875rem;
   color: var(--text-secondary);
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--accent-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .actions {
@@ -299,16 +274,7 @@ const loadProjectMetrics = async () => {
   margin-top: 1rem;
 }
 
-.feature-list {
-  list-style: none;
-  padding: 0;
-  margin-top: 1rem;
-}
 
-.feature-list li {
-  padding: 0.5rem 0;
-  color: var(--text-secondary);
-}
 
 .analysis-types {
   display: flex;
@@ -342,44 +308,5 @@ const loadProjectMetrics = async () => {
   margin: 0;
 }
 
-.getting-started {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1rem;
-}
 
-.step {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  background-color: var(--bg-tertiary);
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-primary);
-}
-
-.step-number {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background-color: var(--accent-secondary);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.step-content strong {
-  display: block;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
-}
-
-.step-content p {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin: 0;
-}
 </style>
