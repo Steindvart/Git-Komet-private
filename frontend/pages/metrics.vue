@@ -31,17 +31,11 @@
       <!-- Bottleneck Analysis -->
       <div class="card">
         <h3>🚧 Анализ узких мест</h3>
-        <p>Этап с самым долгим средним временем:</p>
         <div class="bottleneck-info" v-if="bottleneckStage !== 'none'">
+          <span class="bottleneck-label">Этап с самым долгим средним временем:</span>
           <div class="bottleneck-stage">
             <span class="stage-icon">🔍</span>
-            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }}</span>
-          </div>
-          <div class="bottleneck-stats">
-            <div class="stat">
-              <span class="stat-label">Среднее время:</span>
-              <span class="stat-value">{{ bottleneckTime.toFixed(1) }} часов</span>
-            </div>
+            <span class="stage-name">{{ getStageDisplayName(bottleneckStage) }} → ~{{ bottleneckTime.toFixed(1) }}ч</span>
           </div>
         </div>
         <div v-else class="bottleneck-info">
@@ -52,30 +46,30 @@
           <div class="stage-item">
             <span class="stage-label">📋 TODO</span>
             <div class="stage-bar">
-              <div class="bar-fill" style="width: 20%"></div>
+              <div class="bar-fill" :style="{ width: getStageBarWidth(stageTimes.todo) + '%' }"></div>
             </div>
-            <span class="stage-time">12ч</span>
+            <span class="stage-time">{{ formatStageTime(stageTimes.todo) }}</span>
           </div>
           <div class="stage-item">
             <span class="stage-label">💻 Разработка</span>
             <div class="stage-bar">
-              <div class="bar-fill" style="width: 45%"></div>
+              <div class="bar-fill" :style="{ width: getStageBarWidth(stageTimes.development) + '%' }"></div>
             </div>
-            <span class="stage-time">28ч</span>
+            <span class="stage-time">{{ formatStageTime(stageTimes.development) }}</span>
           </div>
           <div class="stage-item">
             <span class="stage-label">👁️ Ревью</span>
             <div class="stage-bar">
-              <div class="bar-fill warning" style="width: 80%"></div>
+              <div class="bar-fill" :class="{ warning: bottleneckStage === 'review' }" :style="{ width: getStageBarWidth(stageTimes.review) + '%' }"></div>
             </div>
-            <span class="stage-time">48ч</span>
+            <span class="stage-time">{{ formatStageTime(stageTimes.review) }}</span>
           </div>
           <div class="stage-item">
             <span class="stage-label">🧪 Тестирование</span>
             <div class="stage-bar">
-              <div class="bar-fill" style="width: 25%"></div>
+              <div class="bar-fill" :class="{ warning: bottleneckStage === 'testing' }" :style="{ width: getStageBarWidth(stageTimes.testing) + '%' }"></div>
             </div>
-            <span class="stage-time">15ч</span>
+            <span class="stage-time">{{ formatStageTime(stageTimes.testing) }}</span>
           </div>
         </div>
         <div class="recommendations">
@@ -223,6 +217,12 @@ const debtScore = ref(0)
 // Bottleneck data
 const bottleneckStage = ref('none')
 const bottleneckTime = ref(0)
+const stageTimes = ref({
+  todo: 0,
+  development: 0,
+  review: 0,
+  testing: 0
+})
 
 onMounted(async () => {
   // Check if project is passed via query parameter
@@ -283,6 +283,12 @@ const loadAllMetrics = async () => {
     const bottleneck = await api.fetchProjectBottlenecks(selectedProjectId.value)
     bottleneckStage.value = bottleneck.bottleneck_stage
     bottleneckTime.value = bottleneck.avg_time_in_stage
+    stageTimes.value = bottleneck.stage_times || {
+      todo: 0,
+      development: 0,
+      review: 0,
+      testing: 0
+    }
 
   } catch (error) {
     console.error('Error loading metrics:', error)
@@ -300,6 +306,25 @@ const getStageDisplayName = (stage: string) => {
     'none': 'Нет узких мест'
   }
   return names[stage] || stage
+}
+
+// Calculate percentage width for stage bar based on the max time
+const getStageBarWidth = (stageTime: number) => {
+  const maxTime = Math.max(
+    stageTimes.value.todo,
+    stageTimes.value.development,
+    stageTimes.value.review,
+    stageTimes.value.testing,
+    1 // minimum to avoid division by zero
+  )
+  return Math.round((stageTime / maxTime) * 100)
+}
+
+// Format stage time display
+const formatStageTime = (hours: number) => {
+  if (hours === 0) return '0ч'
+  if (hours < 1) return `${Math.round(hours * 60)}мин`
+  return `${Math.round(hours)}ч`
 }
 </script>
 
@@ -514,25 +539,35 @@ const getStageDisplayName = (stage: string) => {
 
 .bottleneck-info {
   margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bottleneck-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .bottleneck-stage {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 1rem;
   background-color: rgba(210, 153, 34, 0.15);
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
+  border-radius: 0.375rem;
   border: 1px solid rgba(210, 153, 34, 0.3);
 }
 
 .stage-icon {
-  font-size: 2rem;
+  font-size: 1.5rem;
 }
 
 .stage-name {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
 }
