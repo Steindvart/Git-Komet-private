@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.db.session import Base
-from app.models.models import Project, TeamMember, Commit, PullRequest, Task, CodeReview
+from app.models.models import Project, ProjectMember, Commit, PullRequest, Task, CodeReview
 from app.services.project_effectiveness_service import ProjectEffectivenessService
 from app.services.project_technical_debt_service import ProjectTechnicalDebtService
 from app.services.project_bottleneck_service import ProjectBottleneckService
@@ -50,14 +50,14 @@ def sample_project(db_session):
     db_session.flush()
     
     # Создать участников
-    member1 = TeamMember(
+    member1 = ProjectMember(
         project_id=project.id,
         external_id="user1",
         email="user1@test.com",
         name="Test User 1",
         role="Developer"
     )
-    member2 = TeamMember(
+    member2 = ProjectMember(
         project_id=project.id,
         external_id="user2",
         email="user2@test.com",
