@@ -13,15 +13,29 @@ Git-Komet is a system for analyzing development team effectiveness through metri
 
 Система интегрируется с T1 Сфера.Код и собирает данные о:
 - Коммитах (commits)
-- Pull Request'ах
-- Code Review
-- Задачах (tasks/issues)
+- Ветках (branches)
+- Репозиториях (repositories)
+- Diff коммитов (commit diffs)
 
 The system integrates with T1 Sphere.Code and collects data about:
 - Commits
-- Pull Requests
-- Code Reviews  
-- Tasks/Issues
+- Branches
+- Repositories
+- Commit diffs
+
+**Доступные эндпоинты / Available Endpoints:**
+
+| Описание                           |  Метод | URL                                                    |
+|------------------------------------|-------:|--------------------------------------------------------|
+| Запросить список проектов          |    GET | /projects                                              |
+| Запросить информацию по проекту    |    GET | /projects/{projectKey}                                 |
+| Запросить список репозиториев      |    GET | /projects/{projectKey}/repos                           |
+| Запросить информации о репозитории |    GET | /projects/{projectKey}/repos/{repoName}                |
+| Запросить список веток репозитория |    GET | /projects/{projectKey}/repos/{repoName}/branches       |
+| Запросить список коммитов          |    GET | /projects/{projectKey}/repos/{repoName}/commits        |
+| Запросить diff коммита             |    GET | /projects/{projectKey}/repos/{repoName}/commits/{sha1} |
+
+**Важно:** "Проект" - это совокупность репозиториев. Репозитории в свою очередь хранят в себе информацию с git данными.
 
 ## 🚀 Стек технологий / Tech Stack
 
@@ -148,11 +162,13 @@ Frontend будет доступен по адресу: http://localhost:3000
 
 ### Основные функции / Main Features
 
-- ✅ **Интеграция с T1 Сфера.Код** - Получение данных из T1 API (с mock-данными)
-- ✅ **Управление командами** - Создание команд и добавление участников
-- ✅ **Анализ эффективности команд** - Комплексная оценка производительности (0-100)
-- ✅ **Анализ технического долга** - Отслеживание покрытия тестами, TODO, качества ревью
-- ✅ **Анализ узких мест** - Выявление bottleneck'ов в workflow (review, development, testing)
+- ✅ **Интеграция с T1 Сфера.Код** - Получение данных из git-репозиториев (коммиты, ветки, diff)
+- ✅ **Управление проектами** - Создание проектов и добавление участников
+- ✅ **Анализ эффективности проектов** - Комплексная оценка производительности (0-100)
+- ✅ **Анализ технического долга** - Отслеживание TODO комментариев из diff коммитов
+- ✅ **Анализ переработок** - Забота о сотрудниках (работа после часов и в выходные)
+- ✅ **Анализ активных участников** - Количество уникальных авторов коммитов
+- ✅ **Анализ экспертности** - Количество коммитов на человека для оценки уровня знаний
 - ✅ **Визуализация данных** - Графики и дашборды для отображения метрик
 - ✅ **Алерты и рекомендации** - Автоматические уведомления о проблемах
 - ✅ **Тренды** - Отслеживание изменений метрик во времени
@@ -160,25 +176,36 @@ Frontend будет доступен по адресу: http://localhost:3000
 
 ### Анализируемые метрики / Analyzed Metrics
 
-#### 1. Team Effectiveness Score (Оценка эффективности команды)
-- 📈 **Общий балл эффективности** (0-100) - Similar to SonarQube
-- 📊 **Активность команды** - Commits, PRs, active contributors
-- ⏱️ **Скорость ревью** - Average time to first review
-- 👥 **Коллаборация** - Team collaboration metrics
-- 🚨 **Алерты** - Automated alerts when scores drop
+#### 1. Project Effectiveness Score (Оценка эффективности проекта)
+- 📈 **Общий балл эффективности** (0-100) - Based on commit activity and work-life balance
+- 📊 **Активность команды** - Total commits, active contributors
+- 👥 **Вовлеченность** - Team collaboration through commit patterns
+- 🚨 **Алерты** - Automated alerts when scores drop or issues detected
 
 #### 2. Technical Debt Analysis (Анализ технического долга)
-- 🧪 **Test Coverage Trends** - Tracking test coverage changes
-- 📝 **TODO Growth** - Monitoring TODO comments accumulation
-- 💬 **Review Quality** - Code review comment density
-- 📉 **Debt Score** - Overall technical debt indicator
-- 💡 **Recommendations** - Actionable improvement suggestions
+- 📝 **TODO из diff** - Мониторинг TODO комментариев из коммитов
+- 📈 **TODO тренды** - Отслеживание роста/снижения TODO
+- 📉 **Debt Score** - Оценка технического долга на основе TODO (0-100, меньше лучше)
+- 💡 **Рекомендации** - Конкретные предложения по устранению долга
 
-#### 3. Bottleneck Analysis (Анализ узких мест)
-- 🔍 **Stage Identification** - Which stage is slowest (todo, dev, review, testing)
-- ⏰ **Time Tracking** - Average time in each stage
-- 📊 **Impact Assessment** - How severe is the bottleneck
-- 🎯 **Recommendations** - Specific suggestions to improve workflow
+#### 3. Employee Care Analysis (Забота о сотрудниках)
+- ⏰ **Переработки** - Процент коммитов после рабочего времени
+- 📅 **Работа в выходные** - Процент коммитов в выходные дни
+- 💚 **Care Score** - Оценка заботы о сотрудниках (0-100, больше лучше)
+- 📊 **Статус** - Excellent, Good, Needs Attention, Critical
+- 💡 **Рекомендации** - Советы по улучшению work-life balance
+
+#### 4. Active Contributors Analysis (Анализ активных участников)
+- 👥 **Активные участники** - Количество уникальных авторов коммитов за период
+- 📊 **Общее количество коммитов** - Активность проекта
+- 📈 **Среднее на участника** - Commits per contributor
+- 🎯 **Ресурсы проекта** - Понимание затрат человеческих ресурсов
+
+#### 5. Expertise Level Analysis (Анализ экспертности)
+- 🏆 **Коммиты на человека** - Детальная статистика по каждому участнику
+- 📊 **Измененные строки** - Lines of code contributed
+- 🎓 **Уровень экспертности** - Beginner, Intermediate, Advanced, Expert
+- 📈 **Рейтинг участников** - Сортировка по вкладу в проект
 
 ## 📖 API Documentation
 
@@ -188,21 +215,32 @@ Frontend будет доступен по адресу: http://localhost:3000
 
 ### Основные эндпоинты / Main Endpoints
 
-#### Projects (T1 Сфера.Код Projects)
+#### Projects (Git Repositories)
 - `GET /api/v1/projects` - List all projects
 - `POST /api/v1/projects` - Create project
-- `POST /api/v1/projects/{id}/generate-mock-data` - Generate mock T1 data
+- `POST /api/v1/projects/{id}/generate-mock-data` - Generate mock data
 
-#### Teams
-- `GET /api/v1/teams` - List teams
-- `POST /api/v1/teams` - Create team
-- `POST /api/v1/teams/members` - Add team member
+#### Project Members
+- `GET /api/v1/teams` - List project members (legacy endpoint name)
+- `POST /api/v1/teams` - Create project
+- `POST /api/v1/teams/members` - Add project member
 
 #### Metrics & Analysis
-- `GET /api/v1/metrics/team/{id}/effectiveness` - Team effectiveness score
-- `GET /api/v1/metrics/team/{id}/technical-debt` - Technical debt analysis
-- `GET /api/v1/metrics/team/{id}/bottlenecks` - Bottleneck analysis
-- `GET /api/v1/metrics/project/{id}/technical-debt` - Project technical debt
+
+##### Эффективность проекта / Project Effectiveness
+- `GET /api/v1/metrics/project/{id}/effectiveness` - Project effectiveness score
+- `GET /api/v1/metrics/project/{id}/active-contributors` - **NEW:** Active contributors analysis
+- `GET /api/v1/metrics/project/{id}/commits-per-person` - **NEW:** Commits per person (expertise level)
+
+##### Забота о сотрудниках / Employee Care  
+- `GET /api/v1/metrics/project/{id}/employee-care` - Employee care metrics (overwork analysis)
+
+##### Технический долг / Technical Debt
+- `GET /api/v1/metrics/project/{id}/technical-debt` - Technical debt analysis (TODO comments only)
+
+##### Узкие места / Bottlenecks (DEPRECATED - requires PR/Task data)
+- `GET /api/v1/metrics/project/{id}/bottlenecks` - Bottleneck analysis
+- `GET /api/v1/metrics/project/{id}/prs-needing-attention` - PRs needing attention
 
 ## 🧪 Тестирование / Testing
 
